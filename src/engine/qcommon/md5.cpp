@@ -263,7 +263,7 @@ static void MD5Final( struct MD5Context *ctx, unsigned char *digest )
 		MD5Transform( ctx->buf, ( uint32_t * ) ctx->in );
 
 		/* Now fill the next block with 56 bytes */
-		memset( ctx->in, 0, 56 );
+		memset( ctx->in + 0, 0, 56 );
 	}
 	else
 	{

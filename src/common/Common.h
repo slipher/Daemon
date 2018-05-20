@@ -53,4 +53,15 @@ using Math::Vec2;
 using Math::Vec3;
 using Math::Vec4;
 
+template<typename T> void memset(T* const& p, int byte, size_t size) {
+    static_assert(std::is_trivial<T>::value, "memsetting non-pod");
+    ASSERT_EQ(size % sizeof(T), 0);
+    memset((void*)p, byte, size);
+}
+template<typename T, size_t N> void memset(T (&arr)[N], int byte, size_t size) {
+    static_assert(std::is_trivial<T>::value, "memsetting non-pod");
+    ASSERT_EQ(size, sizeof(T) * N);
+    memset((void*)&arr, byte, size);
+}
+
 #endif // COMMON_COMMON_H_

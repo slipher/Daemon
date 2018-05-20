@@ -304,7 +304,7 @@ private:
 		return from;
 	}
 
-	component_type red = 0, green = 0, blue = 0, alpha = 0;
+	component_type red, green, blue, alpha;
 
 };
 
