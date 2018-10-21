@@ -40,3 +40,15 @@ public:
     }
 };
 static ProfileStatsCmd profstatsRegistration;
+
+class ProfileStatsClearCmd : public Cmd::StaticCmd
+{
+public:
+    ProfileStatsClearCmd() : StaticCmd("profclear", 0, "Clear profile stats") {}
+
+    void Run(const Cmd::Args&) const OVERRIDE
+    {
+        tickCounts.clear();
+    }
+};
+static ProfileStatsClearCmd profclearRegistration;
