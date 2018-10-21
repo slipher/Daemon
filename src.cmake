@@ -50,6 +50,8 @@ set(COMMONLIST
     ${COMMON_DIR}/Math.h
     ${COMMON_DIR}/Optional.h
     ${COMMON_DIR}/Platform.h
+    ${COMMON_DIR}/Profile.cpp
+    ${COMMON_DIR}/Profile.h
     ${COMMON_DIR}/Serialize.h
     ${COMMON_DIR}/String.cpp
     ${COMMON_DIR}/String.h
