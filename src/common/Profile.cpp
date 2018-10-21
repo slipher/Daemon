@@ -11,7 +11,8 @@ int64_t prof::now() {
 }
 
 prof::~prof() {
-    tickCounts[name].push_back(now() - start);
+    int64_t elapsed = now() - start;
+    tickCounts[name].push_back(elapsed);
 }
 
 class ProfileStatsCmd : public Cmd::StaticCmd
