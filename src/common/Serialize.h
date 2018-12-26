@@ -208,6 +208,9 @@ namespace Util {
 		{
 			return data;
 		}
+		size_t GetPos() const {
+			return pos;
+		}
 		std::vector<IPC::FileDesc>& GetHandles()
 		{
 			return handles;

@@ -56,6 +56,14 @@ Maryland 20850 USA.
 #define P__(x, y, c) Trans_GettextGamePlural(x, y, c)
 
 
+struct IPCMessage {
+	cgameImport_t index;
+	std::vector<char> data;
+};
+std::vector<IPCMessage> renderMessages;
+bool recordingRenderMessages;
+bool replayingRenderMessages;
+
 /*
 ====================
 CL_GetUserCmd
@@ -1078,7 +1086,18 @@ void CGameVM::CGameShutdown()
 
 void CGameVM::CGameDrawActiveFrame(int serverTime,  bool demoPlayback)
 {
-	this->SendMsg<CGameDrawActiveFrameMsg>(serverTime, demoPlayback);
+	if (replayingRenderMessages) {
+		for (const auto& msg : renderMessages) {
+			Util::Reader reader;
+			reader.GetData() = msg.data;
+			this->cmdBuffer.HandleCommandBufferSyscall(VM::QVM, msg.index, reader);
+			//reader.CheckEndRead();
+		}
+		replayingRenderMessages = false;
+	} else {
+		this->SendMsg<CGameDrawActiveFrameMsg>(serverTime, demoPlayback);
+	}
+	recordingRenderMessages = false;
 }
 
 int CGameVM::CGameCrosshairPlayer()
@@ -1598,8 +1617,61 @@ template<typename Msg, typename Func> void HandleMsg(Util::Reader reader, Func&&
 CGameVM::CmdBuffer::CmdBuffer(std::string name): IPC::CommandBufferHost(name) {
 }
 
+
+
+
+void RecordRenderMessage(int index, Util::Reader& reader) {
+	if (!recordingRenderMessages) {
+		return;
+	}
+	switch (index) {
+	case CG_R_SCISSOR_ENABLE:
+	case CG_R_SCISSOR_SET:
+	case CG_R_CLEARSCENE:
+	case CG_R_ADDREFENTITYTOSCENE:
+	case CG_R_ADDPOLYTOSCENE:
+	case CG_R_ADDPOLYSTOSCENE:
+	case CG_R_ADDLIGHTTOSCENE:
+	case CG_R_ADDADDITIVELIGHTTOSCENE:
+	case CG_R_SETCOLOR:
+	case CG_R_SETCLIPREGION:
+	case CG_R_RESETCLIPREGION:
+	case CG_R_DRAWSTRETCHPIC:
+	case CG_R_DRAWROTATEDPIC:
+	case CG_ADDVISTESTTOSCENE:
+	case CG_UNREGISTERVISTEST:
+	case CG_SETCOLORGRADING:
+	case CG_R_RENDERSCENE:
+	case CG_R_ADD2DPOLYSINDEXED:
+		renderMessages.push_back({ (cgameImport_t)index, {reader.GetData().begin() + reader.GetPos(), reader.GetData().end()} });
+		break;
+	default:
+		break;
+	}
+}
+
+class RendererRecordCmd : public Cmd::StaticCmd {
+public:
+	RendererRecordCmd() : StaticCmd("rendererRecord", "record cgame render commands") {}
+	void Run(const Cmd::Args& args) const override {
+		recordingRenderMessages = true;
+		renderMessages.clear();
+	}
+};
+static RendererRecordCmd rendererRecordCmdRegistration;
+
+class RendererReplayCmd : public Cmd::StaticCmd {
+public:
+	RendererReplayCmd() : StaticCmd("rendererReplay", "replay cgame render commands") {}
+	void Run(const Cmd::Args& args) const override {
+		replayingRenderMessages = true;
+	}
+};
+static RendererReplayCmd rendererReplayCmdRegistration;
+
 void CGameVM::CmdBuffer::HandleCommandBufferSyscall(int major, int minor, Util::Reader& reader) {
 	if (major == VM::QVM) {
+		RecordRenderMessage(minor, reader);
 		switch (minor) {
 
 			// All sounds
