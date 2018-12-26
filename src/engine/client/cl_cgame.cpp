@@ -56,13 +56,10 @@ Maryland 20850 USA.
 #define P__(x, y, c) Trans_GettextGamePlural(x, y, c)
 
 
-struct IPCMessage {
-	cgameImport_t index;
-	std::vector<char> data;
-};
-std::vector<IPCMessage> renderMessages;
+std::vector<std::pair<cgameImport_t, std::vector<char>>> renderMessages;
 bool recordingRenderMessages;
 bool replayingRenderMessages;
+std::string renderRecordFilename;
 
 /*
 ====================
@@ -1089,15 +1086,21 @@ void CGameVM::CGameDrawActiveFrame(int serverTime,  bool demoPlayback)
 	if (replayingRenderMessages) {
 		for (const auto& msg : renderMessages) {
 			Util::Reader reader;
-			reader.GetData() = msg.data;
-			this->cmdBuffer.HandleCommandBufferSyscall(VM::QVM, msg.index, reader);
+			reader.GetData() = msg.second;
+			this->cmdBuffer.HandleCommandBufferSyscall(VM::QVM, msg.first, reader);
 			//reader.CheckEndRead();
 		}
 		replayingRenderMessages = false;
 	} else {
 		this->SendMsg<CGameDrawActiveFrameMsg>(serverTime, demoPlayback);
 	}
-	recordingRenderMessages = false;
+	if (recordingRenderMessages) {
+		recordingRenderMessages = false;
+		FS::File f = FS::HomePath::OpenWrite(renderRecordFilename);
+		Util::Writer w;
+		w.Write<decltype(renderMessages)>(renderMessages);
+		f.Write(w.GetData().data(), w.GetData().size());
+	}
 }
 
 int CGameVM::CGameCrosshairPlayer()
@@ -1618,8 +1621,6 @@ CGameVM::CmdBuffer::CmdBuffer(std::string name): IPC::CommandBufferHost(name) {
 }
 
 
-
-
 void RecordRenderMessage(int index, Util::Reader& reader) {
 	if (!recordingRenderMessages) {
 		return;
@@ -1643,6 +1644,7 @@ void RecordRenderMessage(int index, Util::Reader& reader) {
 	case CG_SETCOLORGRADING:
 	case CG_R_RENDERSCENE:
 	case CG_R_ADD2DPOLYSINDEXED:
+		// TODO(slipher) Find a way to avoid writing extra bytes at the end if there are a lot?
 		renderMessages.push_back({ (cgameImport_t)index, {reader.GetData().begin() + reader.GetPos(), reader.GetData().end()} });
 		break;
 	default:
@@ -1652,19 +1654,35 @@ void RecordRenderMessage(int index, Util::Reader& reader) {
 
 class RendererRecordCmd : public Cmd::StaticCmd {
 public:
-	RendererRecordCmd() : StaticCmd("rendererRecord", "record cgame render commands") {}
+	RendererRecordCmd() : StaticCmd("renderRecord", "record cgame render commands") {}
 	void Run(const Cmd::Args& args) const override {
+		if (args.size() != 2) {
+			PrintUsage(args, "<name>");
+			return;
+		}
 		recordingRenderMessages = true;
 		renderMessages.clear();
+		renderRecordFilename = "rendersnapshot/" + args.Argv(1) + ".cmds";
 	}
 };
 static RendererRecordCmd rendererRecordCmdRegistration;
 
 class RendererReplayCmd : public Cmd::StaticCmd {
 public:
-	RendererReplayCmd() : StaticCmd("rendererReplay", "replay cgame render commands") {}
+	RendererReplayCmd() : StaticCmd("renderReplay", "replay cgame render commands") {}
 	void Run(const Cmd::Args& args) const override {
+		if (args.size() != 2) {
+			PrintUsage(args, "<name>");
+			return;
+		}
 		replayingRenderMessages = true;
+		std::string renderReplayFilename = "rendersnapshot/" + args.Argv(1) + ".cmds";
+		FS::File f = FS::HomePath::OpenRead(renderReplayFilename);
+		std::string contents = f.ReadAll();
+		Util::Reader r;
+		r.GetData().assign(contents.begin(), contents.end());
+		renderMessages = r.Read<decltype(renderMessages)>();
+		r.CheckEndRead();
 	}
 };
 static RendererReplayCmd rendererReplayCmdRegistration;
