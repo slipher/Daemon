@@ -2340,6 +2340,8 @@ static inline void halfToFloat( const f16vec4_t in, vec4_t out )
 	struct model_t
 	{
 		char        name[ MAX_QPATH ];
+		// (Pak) path it was actually loaded from. There could be others if it uses LoDs.
+		char        path[ MAX_QPATH + 16 ];
 		modtype_t   type;
 		int         index; // model = tr.models[model->index]
 

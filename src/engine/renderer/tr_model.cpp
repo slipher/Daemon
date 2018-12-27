@@ -163,6 +163,7 @@ qhandle_t RE_RegisterModel( const char *name )
 
 		if ( loaded )
 		{
+			Q_strncpyz( mod->path, name, sizeof(mod->path) );
 			return mod->index;
 		}
 	}
@@ -233,6 +234,7 @@ qhandle_t RE_RegisterModel( const char *name )
 		{
 			mod->numLods++;
 			numLoaded++;
+			Q_strncpyz( mod->path, filename, sizeof(mod->path) );
 		}
 	}
 
