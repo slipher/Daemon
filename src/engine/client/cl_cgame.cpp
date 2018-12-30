@@ -1096,8 +1096,11 @@ void CGameVM::CGameDrawActiveFrame(int serverTime,  bool demoPlayback)
 	}
 	if (recordingRenderMessages) {
 		recordingRenderMessages = false;
+		// TODO create directory
 		FS::File f = FS::HomePath::OpenWrite(renderRecordFilename);
 		Util::Writer w;
+		const char* info = cl.gameState[CS_SERVERINFO].c_str();
+		w.Write<std::string>(Info_ValueForKey(info, "mapname"));
 		w.Write<decltype(renderMessages)>(renderMessages);
 		f.Write(w.GetData().data(), w.GetData().size());
 	}
@@ -1662,7 +1665,7 @@ public:
 		}
 		recordingRenderMessages = true;
 		renderMessages.clear();
-		renderRecordFilename = "rendersnapshot/" + args.Argv(1) + ".cmds";
+		renderRecordFilename = "game/rendersnapshot/" + args.Argv(1) + ".cmds";
 	}
 };
 static RendererRecordCmd rendererRecordCmdRegistration;
@@ -1676,7 +1679,7 @@ public:
 			return;
 		}
 		replayingRenderMessages = true;
-		std::string renderReplayFilename = "rendersnapshot/" + args.Argv(1) + ".cmds";
+		std::string renderReplayFilename = "game/rendersnapshot/" + args.Argv(1) + ".cmds";
 		FS::File f = FS::HomePath::OpenRead(renderReplayFilename);
 		std::string contents = f.ReadAll();
 		Util::Reader r;
