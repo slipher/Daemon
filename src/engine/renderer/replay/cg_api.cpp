@@ -8,6 +8,8 @@
 #include "shared/CommonProxies.h"
 #include "shared/client/cg_api.h"
 
+#include "./replay_data.h"
+
 // Symbols required by the shared VMMain code
 
 int VM::VM_API_VERSION = CGAME_API_VERSION;
@@ -121,11 +123,40 @@ void VM::VMHandleSyscall(uint32_t id, Util::Reader reader) {
     }
 }
 
+RenderReplayData DeserializeReplayData(Util::Reader& reader) {
+	RenderReplayData data;
+	data.shaders = reader.Read<decltype(data.shaders)>();
+	return data;
+}
 
-template<typename Id, typename... MsgArgs>  void ForwardMsgInternal(IPC::Message<Id, MsgArgs...> p, Util::Reader& reader) {
+ReplayRemap LoadResources(const RenderReplayData& data) {
+	ReplayRemap remap;
+	for (const auto& pair : data.shaders) {
+		int oldHandle = pair.first;
+		int currentHandle = trap_R_RegisterShader(pair.second.c_str(), RSF_DEFAULT); //TODO flags
+		if (!currentHandle) {
+			Sys::Drop("Couldn't load shader for render replay: \"%s\"", pair.second);
+		}
+		remap.shaders.emplace_back(oldHandle, currentHandle);
+	}
+	return remap;
+}
+
+
+template<typename Id, typename... MsgArgs>
+void ForwardMsgInternal(IPC::Message<Id, MsgArgs...> p, Util::Reader& reader) {
 	using Message = IPC::Message<Id, MsgArgs...>;
 	typename IPC::detail::MapTuple<typename Message::Inputs>::type inputs;
 	reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
+	HandlePointers hp = FindHandles(cgameImport_t(Id::value & 0xffff), &inputs);
+	for (int* p : hp.shaders) {
+		if (!*p) continue;
+		auto it = std::lower_bound(rremap.shaders.begin(), rremap.shaders.end(), std::make_pair(*p, 0));
+		if (it == rremap.shaders.end() || it->first != *p) {
+			Sys::Drop("Render replay: unmapped shader handle %d", *p);
+		}
+		*p = it->second;
+	}
 	struct Sender {
 		void operator()(MsgArgs... args) {
 			cmdBuffer.SendMsg<decltype(p)>(std::move(args)...);
@@ -141,6 +172,7 @@ template<typename Msg> void ForwardMsg(Util::Reader& reader) {
 std::string rrname_last = "";
 Log::Logger rr("rr", "[rr]", Log::Level::NOTICE);
 std::vector<std::pair<cgameImport_t, std::vector<char>>> messages;
+ReplayRemap rremap;
 
 void GetMessagesAndLoadMap() {
 	std::string rrname = Cvar::GetValue("rrname");
@@ -153,8 +185,13 @@ void GetMessagesAndLoadMap() {
 	std::string contents = f.ReadAll();
 	Util::Reader r;
 	r.GetData().assign(contents.begin(), contents.end());
+	int version = r.Read<int>();
+	if (version != RR_VERSION) {
+		Sys::Drop("Render replay file written with protocol %d but I speak protocol %d", version, RR_VERSION);
+	}
 	std::string map = r.Read<std::string>();
 	messages = r.Read<decltype(messages)>();
+	RenderReplayData replayData = DeserializeReplayData(r);
 	r.CheckEndRead();
 	rr.Notice("read %d raw messages", messages.size());
 	// TODO make it also possible to be in the main menu
@@ -162,6 +199,8 @@ void GetMessagesAndLoadMap() {
 	rr.Notice("map: %s", map);
 	trap_R_LoadWorldMap(Str::Format("maps/%s.bsp", map).c_str());
 	rr.Notice("loaded map");
+	rremap = LoadResources(replayData);
+	rr.Notice("loaded other resources");
 }
 
 void ReplayMessages() {
@@ -191,6 +230,7 @@ void ReplayMessages() {
 		default:
 			Sys::Drop("unhandled msg id %d", int(m.first));
 		}
+		reader.CheckEndRead();
 	}
 }
 

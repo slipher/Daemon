@@ -46,6 +46,8 @@ Maryland 20850 USA.
 #include "framework/CommandSystem.h"
 #include "framework/CvarSystem.h"
 
+#include "renderer/replay/replay_data.h"
+
 // Suppress warnings for unused [this] lambda captures.
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wunused-lambda-capture"
@@ -60,6 +62,7 @@ std::vector<std::pair<cgameImport_t, std::vector<char>>> renderMessages;
 bool recordingRenderMessages;
 bool replayingRenderMessages;
 std::string renderRecordFilename;
+RenderRecordData recordData;
 
 /*
 ====================
@@ -1083,6 +1086,7 @@ void CGameVM::CGameShutdown()
 
 void CGameVM::CGameDrawActiveFrame(int serverTime,  bool demoPlayback)
 {
+#ifdef BUILD_GRAPHICAL_CLIENT
 	if (replayingRenderMessages) {
 		for (const auto& msg : renderMessages) {
 			Util::Reader reader;
@@ -1099,11 +1103,16 @@ void CGameVM::CGameDrawActiveFrame(int serverTime,  bool demoPlayback)
 		// TODO create directory
 		FS::File f = FS::HomePath::OpenWrite(renderRecordFilename);
 		Util::Writer w;
+		w.Write<int>(RR_VERSION);
 		const char* info = cl.gameState[CS_SERVERINFO].c_str();
 		w.Write<std::string>(Info_ValueForKey(info, "mapname"));
 		w.Write<decltype(renderMessages)>(renderMessages);
+		SaveReplayData(recordData, w);
 		f.Write(w.GetData().data(), w.GetData().size());
 	}
+#else
+	this->SendMsg<CGameDrawActiveFrameMsg>(serverTime, demoPlayback);
+#endif
 }
 
 int CGameVM::CGameCrosshairPlayer()
@@ -1604,13 +1613,23 @@ void CGameVM::QVMSyscall(int index, Util::Reader& reader, IPC::Channel& channel)
 	}
 }
 
+
 //TODO move somewhere else
 template<typename Func, typename Id, typename... MsgArgs> void HandleMsg(IPC::Message<Id, MsgArgs...>, Util::Reader reader, Func&& func)
 {
     using Message = IPC::Message<Id, MsgArgs...>;
 
+	size_t initialPos = reader.GetPos();
+
     typename IPC::detail::MapTuple<typename Message::Inputs>::type inputs;
     reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
+
+	if (recordingRenderMessages) {
+		size_t finalPos = reader.GetPos();
+		const char* base = reader.GetData().data();
+		RecordRenderMessage(
+			cgameImport_t(Id::value & 0xFFFF), &inputs, base + initialPos, base + finalPos);
+	}
 
     Util::apply(std::forward<Func>(func), std::move(inputs));
 }
@@ -1624,10 +1643,7 @@ CGameVM::CmdBuffer::CmdBuffer(std::string name): IPC::CommandBufferHost(name) {
 }
 
 
-void RecordRenderMessage(int index, Util::Reader& reader) {
-	if (!recordingRenderMessages) {
-		return;
-	}
+void RecordRenderMessage(cgameImport_t index, void* tuple, const char* begin, const char* end) {
 	switch (index) {
 	case CG_R_SCISSOR_ENABLE:
 	case CG_R_SCISSOR_SET:
@@ -1647,9 +1663,14 @@ void RecordRenderMessage(int index, Util::Reader& reader) {
 	case CG_SETCOLORGRADING:
 	case CG_R_RENDERSCENE:
 	case CG_R_ADD2DPOLYSINDEXED:
-		// TODO(slipher) Find a way to avoid writing extra bytes at the end if there are a lot?
-		renderMessages.push_back({ (cgameImport_t)index, {reader.GetData().begin() + reader.GetPos(), reader.GetData().end()} });
+	{
+		renderMessages.push_back({ index, {begin, end} });
+		auto h = FindHandles(index, tuple);
+		for (const int* p : h.shaders) {
+			recordData.shaderHandles.insert(*p);
+		}
 		break;
+	}
 	default:
 		break;
 	}
@@ -1692,7 +1713,6 @@ static RendererReplayCmd rendererReplayCmdRegistration;
 
 void CGameVM::CmdBuffer::HandleCommandBufferSyscall(int major, int minor, Util::Reader& reader) {
 	if (major == VM::QVM) {
-		RecordRenderMessage(minor, reader);
 		switch (minor) {
 
 			// All sounds

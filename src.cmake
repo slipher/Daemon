@@ -125,6 +125,8 @@ set(RENDERERLIST
     ${ENGINE_DIR}/renderer/tr_types.h
     ${ENGINE_DIR}/renderer/tr_vbo.cpp
     ${ENGINE_DIR}/renderer/tr_world.cpp
+    ${ENGINE_DIR}/renderer/replay/replay_data.h
+    ${ENGINE_DIR}/renderer/replay/replay_data.cpp
     ${ENGINE_DIR}/sys/sdl_glimp.cpp
     ${ENGINE_DIR}/sys/sdl_icon.h
 )
