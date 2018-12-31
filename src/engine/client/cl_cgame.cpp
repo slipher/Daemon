@@ -60,7 +60,6 @@ Maryland 20850 USA.
 
 std::vector<std::pair<cgameImport_t, std::vector<char>>> renderMessages;
 bool recordingRenderMessages;
-bool replayingRenderMessages;
 std::string renderRecordFilename;
 RenderRecordData recordData;
 
@@ -1086,18 +1085,8 @@ void CGameVM::CGameShutdown()
 
 void CGameVM::CGameDrawActiveFrame(int serverTime,  bool demoPlayback)
 {
+	this->SendMsg<CGameDrawActiveFrameMsg>(serverTime, demoPlayback);
 #ifdef BUILD_GRAPHICAL_CLIENT
-	if (replayingRenderMessages) {
-		for (const auto& msg : renderMessages) {
-			Util::Reader reader;
-			reader.GetData() = msg.second;
-			this->cmdBuffer.HandleCommandBufferSyscall(VM::QVM, msg.first, reader);
-			//reader.CheckEndRead();
-		}
-		replayingRenderMessages = false;
-	} else {
-		this->SendMsg<CGameDrawActiveFrameMsg>(serverTime, demoPlayback);
-	}
 	if (recordingRenderMessages) {
 		recordingRenderMessages = false;
 		// TODO create directory
@@ -1110,8 +1099,6 @@ void CGameVM::CGameDrawActiveFrame(int serverTime,  bool demoPlayback)
 		SaveReplayData(recordData, w);
 		f.Write(w.GetData().data(), w.GetData().size());
 	}
-#else
-	this->SendMsg<CGameDrawActiveFrameMsg>(serverTime, demoPlayback);
 #endif
 }
 
@@ -1691,25 +1678,6 @@ public:
 };
 static RendererRecordCmd rendererRecordCmdRegistration;
 
-class RendererReplayCmd : public Cmd::StaticCmd {
-public:
-	RendererReplayCmd() : StaticCmd("renderReplay", "replay cgame render commands") {}
-	void Run(const Cmd::Args& args) const override {
-		if (args.size() != 2) {
-			PrintUsage(args, "<name>");
-			return;
-		}
-		replayingRenderMessages = true;
-		std::string renderReplayFilename = "game/rendersnapshot/" + args.Argv(1) + ".cmds";
-		FS::File f = FS::HomePath::OpenRead(renderReplayFilename);
-		std::string contents = f.ReadAll();
-		Util::Reader r;
-		r.GetData().assign(contents.begin(), contents.end());
-		renderMessages = r.Read<decltype(renderMessages)>();
-		r.CheckEndRead();
-	}
-};
-static RendererReplayCmd rendererReplayCmdRegistration;
 
 void CGameVM::CmdBuffer::HandleCommandBufferSyscall(int major, int minor, Util::Reader& reader) {
 	if (major == VM::QVM) {
