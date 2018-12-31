@@ -1656,6 +1656,9 @@ void RecordRenderMessage(cgameImport_t index, void* tuple, const char* begin, co
 		for (const int* p : h.shaders) {
 			recordData.shaderHandles.insert(*p);
 		}
+		for (const int* p : h.models) {
+			recordData.modelHandles.insert(*p);
+		}
 		break;
 	}
 	default:

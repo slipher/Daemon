@@ -25,7 +25,6 @@ void VM::VMHandleSyscall(uint32_t id, Util::Reader reader) {
                 IPC::HandleMsg<CGameStaticInitMsg>(VM::rootChannel, std::move(reader), [] (int milliseconds) {
                     VM::InitializeProxies(milliseconds);
                     FS::Initialize();
-                    srand(time(nullptr));
 					cmdBuffer.Init();
                 });
                 break;
@@ -125,12 +124,21 @@ void VM::VMHandleSyscall(uint32_t id, Util::Reader reader) {
 
 RenderReplayData DeserializeReplayData(Util::Reader& reader) {
 	RenderReplayData data;
+	data.models = reader.Read<decltype(data.models)>();
 	data.shaders = reader.Read<decltype(data.shaders)>();
 	return data;
 }
 
 ReplayRemap LoadResources(const RenderReplayData& data) {
 	ReplayRemap remap;
+	for (const auto& pair : data.models) {
+		int origHandle = pair.first;
+		int currentHandle = trap_R_RegisterModel(pair.second.c_str());
+		if (!currentHandle) {
+			Sys::Drop("Couldn't load model for render replay: \"%s\"", pair.second);
+		}
+		remap.models.emplace_back(origHandle, currentHandle);
+	}
 	for (const auto& pair : data.shaders) {
 		int oldHandle = pair.first;
 		int currentHandle = trap_R_RegisterShader(pair.second.c_str(), RSF_DEFAULT); //TODO flags
@@ -149,6 +157,14 @@ void ForwardMsgInternal(IPC::Message<Id, MsgArgs...> p, Util::Reader& reader) {
 	typename IPC::detail::MapTuple<typename Message::Inputs>::type inputs;
 	reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
 	HandlePointers hp = FindHandles(cgameImport_t(Id::value & 0xffff), &inputs);
+	for (int* p : hp.models) {
+		if (!*p) continue;
+		auto it = std::lower_bound(rremap.models.begin(), rremap.models.end(), std::make_pair(*p, 0));
+		if (it == rremap.models.end() || it->first != *p) {
+			Sys::Drop("Render replay: unmapped model handle %d", *p);
+		}
+		*p = it->second;
+	}
 	for (int* p : hp.shaders) {
 		if (!*p) continue;
 		auto it = std::lower_bound(rremap.shaders.begin(), rremap.shaders.end(), std::make_pair(*p, 0));

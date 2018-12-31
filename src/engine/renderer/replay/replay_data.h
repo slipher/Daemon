@@ -1,6 +1,6 @@
 #include "../../client/cg_msgdef.h"
 
-constexpr int RR_VERSION = 1;
+constexpr int RR_VERSION = 2;
 
 struct RenderRecordData {
 	std::set<int> modelHandles;
@@ -25,14 +25,17 @@ struct RenderRecordData {
 
 struct RenderReplayData {
 	std::vector<std::pair<int, std::string>> shaders;
+	std::vector<std::pair<int, std::string>> models;
 };
 
 struct ReplayRemap {
 	std::vector<std::pair<int, int>> shaders;
+	std::vector<std::pair<int, int>> models;
 };
 
 struct HandlePointers {
 	std::vector<int*> shaders;
+	std::vector<int*> models;
 };
 
 void SaveReplayData(const RenderRecordData& data, Util::Writer& writer);
@@ -41,8 +44,10 @@ struct HandleLoc {
 	int tupleOffset;
 };
 
-template<typename Msg, int index, typename Map>
-void IntParam(Map& m) {
+using HandleLocMap = std::map<cgameImport_t, std::vector<HandleLoc>>;
+
+template<typename Msg, int index>
+void IntParam(HandleLocMap& m) {
 	static_assert(std::is_same<int, typename std::tuple_element<index, Msg::Inputs>::type>::value, "param is not int");
 	Msg::Inputs dummyParams;
 	int tupleOffset = reinterpret_cast<char*>(&std::get<index>(dummyParams)) - reinterpret_cast<char*>(&dummyParams);
@@ -73,15 +78,30 @@ inline const std::map<cgameImport_t, std::vector<HandleLoc>>& ShaderLocs() {
 	return locs;
 }
 
-inline HandlePointers FindHandles(cgameImport_t id, void* tuple) {
-	auto ilocs = ShaderLocs().find(id);
-	HandlePointers hp;
-	if (ilocs != ShaderLocs().end()) {
-		for (HandleLoc hl : ilocs->second) {
+inline const std::map<cgameImport_t, std::vector<HandleLoc>>& ModelLocs() {
+	static const auto locs = [] {
+		std::map<cgameImport_t, std::vector<HandleLoc>> locs;
+		StructParam<Render::AddRefEntityToSceneMsg, 0>(&refEntity_t::hModel, locs);
+		return locs;
+	}();
+	return locs;
+}
+
+inline std::vector<int*> GetHandles(cgameImport_t id, void* tuple, const HandleLocMap& locs) {
+	std::vector<int*> handles;
+	auto it = locs.find(id);
+	if (it != locs.end()) {
+		for (HandleLoc hl : it->second) {
 			int* handle = reinterpret_cast<int*>(reinterpret_cast<char*>(tuple) + hl.tupleOffset);
-			hp.shaders.push_back(handle);
+			handles.push_back(handle);
 		}
 	}
+	return handles;
+}
+inline HandlePointers FindHandles(cgameImport_t id, void* tuple) {
+	HandlePointers hp;
+	hp.shaders = GetHandles(id, tuple, ShaderLocs());
+	hp.models = GetHandles(id, tuple, ModelLocs());
 	return hp;
 }
 

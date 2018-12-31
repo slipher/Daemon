@@ -8,7 +8,6 @@
 
 void SaveReplayData(const RenderRecordData& data, Util::Writer& writer) {
 	//std::set<std::string> pakPaths;
-#if 0
 	{
 		const model_t* defaultModel = R_GetModelByHandle(0);
 		std::vector<std::pair<int, std::string>> modelNamesByHandle;
@@ -29,7 +28,6 @@ void SaveReplayData(const RenderRecordData& data, Util::Writer& writer) {
 		}
 		writer.Write<decltype(modelNamesByHandle)>(modelNamesByHandle);
 	}
-#endif
 	{
 		const shader_t* defaultShader = R_GetShaderByHandle(0);
 		std::vector<std::pair<int, std::string>> shaderPathsByHandle;
