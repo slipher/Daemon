@@ -377,7 +377,12 @@ namespace Cmd {
     }
 
     const std::string& Args::Argv(int argNum) const {
-        return args[argNum];
+        static std::string empty;
+        if (static_cast<size_t>(argNum) < Argc()) {
+            return args[argNum];
+        } else {
+            return empty;
+        }
     }
 
     std::string Args::EscapedArgs(int start, int end) const {
