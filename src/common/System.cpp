@@ -376,7 +376,7 @@ void GenRandomBytes(void* dest, size_t size)
 	if (read(fd, dest, size) != (ssize_t) size)
 		Sys::Error("Failed to read from /dev/urandom: %s", strerror(errno));
 	close(fd);
-#else
+#elif !defined(__EMSCRIPTEN__) //XXX
 	arc4random_buf(dest, size);
 
 #endif

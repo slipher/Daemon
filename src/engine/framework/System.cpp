@@ -322,7 +322,7 @@ void Error(Str::StringRef message)
 }
 
 // Translate non-fatal signals into a quit command
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
 static void SignalHandler(int sig)
 {
 	// Abort if we still haven't exited 1 second after shutdown started
@@ -559,7 +559,7 @@ static void Init(int argc, char** argv)
 		if (pSetProcessDPIAware)
 			pSetProcessDPIAware();
 	}
-#else
+#elif !defined(__EMSCRIPTEN__)
 	// Translate non-fatal signals to a quit command
 	Sys::StartSignalThread();
 
@@ -602,6 +602,7 @@ static void Init(int argc, char** argv)
 	EarlyCvar("fs_legacypaks", cmdlineArgs);
 	FS::Initialize(cmdlineArgs.homePath, cmdlineArgs.libPath, cmdlineArgs.paths);
 
+#ifndef __EMSCRIPTEN__
 	// Look for an existing instance of the engine running on the same homepath.
 	// If there is one, forward any +commands to it and exit.
 	singletonSocketPath = GetSingletonSocketPath();
@@ -628,6 +629,7 @@ static void Init(int argc, char** argv)
 	} catch (std::system_error& err) {
 		Sys::Error("Could not create singleton socket thread: %s", err.what());
 	}
+#endif
 
 	// At this point we can safely open the log file since there are no existing
 	// instances running on this homepath.

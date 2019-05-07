@@ -39,7 +39,7 @@ set(COMMONLIST
     ${COMMON_DIR}/IPC/CommandBuffer.h
     ${COMMON_DIR}/IPC/Common.h
     ${COMMON_DIR}/IPC/CommonSyscalls.h
-    ${COMMON_DIR}/IPC/Primitives.cpp
+#XXX    ${COMMON_DIR}/IPC/Primitives.cpp
     ${COMMON_DIR}/IPC/Primitives.h
     ${COMMON_DIR}/KeyIdentification.cpp
     ${COMMON_DIR}/KeyIdentification.h
@@ -262,9 +262,9 @@ set(ENGINELIST
     ${ENGINE_DIR}/framework/Resource.h
     ${ENGINE_DIR}/framework/System.cpp
     ${ENGINE_DIR}/framework/System.h
-    ${ENGINE_DIR}/framework/VirtualMachine.cpp
+#XXX    ${ENGINE_DIR}/framework/VirtualMachine.cpp
     ${ENGINE_DIR}/framework/VirtualMachine.h
-    ${ENGINE_DIR}/framework/Crypto.cpp
+#XXX    ${ENGINE_DIR}/framework/Crypto.cpp
     ${ENGINE_DIR}/framework/Crypto.h
     ${ENGINE_DIR}/framework/Rcon.cpp
     ${ENGINE_DIR}/framework/Rcon.h

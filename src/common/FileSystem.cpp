@@ -58,6 +58,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mach-o/dyld.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+#define __linux__ //XXX
+#endif
+
 Log::Logger fsLogs(VM_STRING_PREFIX "fs", "[FS]", Log::Level::NOTICE);
 
 // SerializeTraits for PakInfo/LoadedPakInfo
@@ -2206,6 +2210,7 @@ static Util::optional<std::string> GetRealPath(Str::StringRef path, std::string&
 
 void Initialize(Str::StringRef homePath, Str::StringRef libPath, const std::vector<std::string>& paths)
 {
+#ifndef __EMSCRIPTEN__
 	// Create the homepath and its pkg directory to avoid any issues later on
 	std::error_code err;
 	RawPath::CreatePathTo(FS::Path::Build(homePath, "pkg") + "/", err);
@@ -2252,6 +2257,7 @@ void Initialize(Str::StringRef homePath, Str::StringRef libPath, const std::vect
 		fsLogs.Warn("No pak search paths found");
 
 	RefreshPaks();
+#endif
 }
 #endif
 

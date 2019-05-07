@@ -76,7 +76,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // TODO find how to implement breakpoint on PNaCl
 #define BREAKPOINT()
 #else
-#error "Implement BREAKPOINT on your platform"
+#warning "Implement BREAKPOINT on your platform"
 #endif
 
 // noexcept keyword, this should be used on all move constructors and move
