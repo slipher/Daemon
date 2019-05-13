@@ -37,6 +37,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace VM {
 
+void VMHandleSyscall(uint32_t id, Util::Reader reader);
+extern IPC::Channel rootChannel;//??????
+class VMBase;
+extern VMBase* activeVM;
+
 /*
  * To better support mods the gamelogic is treated like any other asset and can
  * be downloaded from a server. However it is considered untrusted code so we
@@ -131,6 +136,25 @@ public:
 		Free();
 	}
 
+#ifdef __EMSCRIPTEN__
+	Util::Reader GameHandleSyscall(uint32_t id, Util::Writer writer) {
+		Util::Reader r;
+		r.data = std::move(writer.data);
+		VM::VMHandleSyscall(id, std::move(r));
+		Util::Reader reply;
+		reply.data = std::move(VM::rootChannel.reply.data);
+		return reply;
+	}
+	template<typename Msg, typename... Args> void SendMsg(Args&&... args)
+	{
+		VM::activeVM = this;
+		Util::Writer writer;
+		writer.WriteArgs(Util::TypeListFromTuple<typename Msg::Inputs>(), std::forward<Args>(args)...);
+		Util::Reader reply = GameHandleSyscall(Msg::id, std::move(writer));
+		auto out = std::forward_as_tuple(std::forward<Args>(args)...);
+		reply.FillTuple<std::tuple_size<typename Msg::Inputs>::value>(Util::TypeListFromTuple<typename Msg::Outputs>(), out);
+	}
+#else
 	// Send a message to the VM
 	template<typename Msg, typename... Args> void SendMsg(Args&&... args)
 	{
@@ -143,6 +167,7 @@ public:
 		}, std::forward<Args>(args)...);
 		LogMessage(false, false, Msg::id);
 	}
+#endif
 
 	struct InProcessInfo {
 		std::thread thread;
@@ -155,7 +180,7 @@ public:
 			: running(false) {}
 	};
 
-protected:
+//protected:
 	// System call handler
 	virtual void Syscall(uint32_t id, Util::Reader reader, IPC::Channel& channel) = 0;
 

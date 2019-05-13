@@ -360,7 +360,9 @@ char *CON_Input_TTY()
 				if ( key == '\n' )
 				{
 					TTY_field.RunCommand(com_consoleCommand.Get());
+#ifndef __EMSCRIPTEN__
 					WriteToStdout("\n]");
+#endif
 					return nullptr;
 				}
 

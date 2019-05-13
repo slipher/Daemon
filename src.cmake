@@ -1,21 +1,21 @@
 set(SHAREDLIST
-    ${MOUNT_DIR}/shared/CommandBufferClient.cpp
+#XXX    ${MOUNT_DIR}/shared/CommandBufferClient.cpp
     ${MOUNT_DIR}/shared/CommandBufferClient.h
     ${MOUNT_DIR}/shared/CommonProxies.cpp
     ${MOUNT_DIR}/shared/CommonProxies.h
     ${MOUNT_DIR}/shared/VMMain.cpp
     ${MOUNT_DIR}/shared/VMMain.h
-    PARENT_SCOPE
+#XXX    PARENT_SCOPE
 )
 
 set(SHAREDLIST_cgame
     ${MOUNT_DIR}/shared/client/cg_api.cpp ${MOUNT_DIR}/shared/client/cg_api.h
-    PARENT_SCOPE
+#XXX    PARENT_SCOPE
 )
 
 set(SHAREDLIST_sgame
     ${MOUNT_DIR}/shared/server/sg_api.cpp ${MOUNT_DIR}/shared/server/sg_api.h
-    PARENT_SCOPE
+#XXX    PARENT_SCOPE
 )
 
 set(COMMONLIST
@@ -262,7 +262,7 @@ set(ENGINELIST
     ${ENGINE_DIR}/framework/Resource.h
     ${ENGINE_DIR}/framework/System.cpp
     ${ENGINE_DIR}/framework/System.h
-#XXX    ${ENGINE_DIR}/framework/VirtualMachine.cpp
+    ${ENGINE_DIR}/framework/VirtualMachine.cpp
     ${ENGINE_DIR}/framework/VirtualMachine.h
 #XXX    ${ENGINE_DIR}/framework/Crypto.cpp
     ${ENGINE_DIR}/framework/Crypto.h
@@ -289,7 +289,7 @@ endif()
 set(QCOMMONLIST
     ${ENGINE_DIR}/qcommon/cmd.cpp
     ${ENGINE_DIR}/qcommon/common.cpp
-    ${ENGINE_DIR}/qcommon/crypto.cpp
+#XXX    ${ENGINE_DIR}/qcommon/crypto.cpp
     ${ENGINE_DIR}/qcommon/crypto.h
     ${ENGINE_DIR}/qcommon/cvar.cpp
     ${ENGINE_DIR}/qcommon/cvar.h
@@ -299,7 +299,7 @@ set(QCOMMONLIST
     ${ENGINE_DIR}/qcommon/net_chan.cpp
     ${ENGINE_DIR}/qcommon/net_ip.cpp
     ${ENGINE_DIR}/qcommon/net_types.h
-    ${ENGINE_DIR}/qcommon/parse.cpp
+#XXX    ${ENGINE_DIR}/qcommon/parse.cpp
     ${ENGINE_DIR}/qcommon/print_translated.h
     ${ENGINE_DIR}/qcommon/qcommon.h
     ${ENGINE_DIR}/qcommon/qfiles.h

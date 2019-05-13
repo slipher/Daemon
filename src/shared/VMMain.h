@@ -45,8 +45,14 @@ namespace VM {
 
 	// Send a message to the engine
 	template<typename Msg, typename... Args> void SendMsg(Args&&... args) {
+#ifdef __EMSCRIPTEN__
+		IPC::Channel c;
+		IPC::SendMsg<Msg>(c, VMHandleSyscall, std::forward<Args>(args)...);
+#else
 		IPC::SendMsg<Msg>(rootChannel, VMHandleSyscall, std::forward<Args>(args)...);
+#endif
 	}
+
 
 }
 

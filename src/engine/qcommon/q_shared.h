@@ -1397,6 +1397,9 @@ void         ByteToDir( int b, vec3_t dir );
 
 #define MAX_TOKENLENGTH 1024
 
+#ifdef __EMSCRIPTEN__
+#include "shared/parse.h"
+#else
 //token types
 enum class tokenType_t {
     TT_STRING, // string
@@ -1416,6 +1419,7 @@ enum class tokenType_t {
 		int   line;
 		int   linescrossed;
 	};
+#endif
 
 // data is an in/out parm, returns a parsed out token
 

@@ -67,7 +67,11 @@ namespace IPC {
 			int32_t flags;
 		};
 		#endif
-        void Close() const;
+#ifdef __EMSCRIPTEN__
+		void Close() const { Sys::Error("filedesc close"); }
+#else
+		void Close() const;
+#endif
 	};
 
     /*

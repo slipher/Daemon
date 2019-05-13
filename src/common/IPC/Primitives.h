@@ -58,7 +58,11 @@ namespace IPC {
 			return handle != -1;
 		}
 
+#ifdef __EMSCRIPTEN__
+		FileDesc GetDesc() const { Sys::Error("filedesc getdesc"); }
+#else
 		FileDesc GetDesc() const;
+#endif
 		static FileHandle FromDesc(const FileDesc& desc);
 
 		int GetHandle() const {
@@ -115,7 +119,47 @@ namespace IPC {
 	};
 
 	// Shared memory area, can be sent over a socket. Can be initialized in the VM
-    // safely as the engine will ask the OS for the size of the Shared memory region.
+	// safely as the engine will ask the OS for the size of the Shared memory region.
+#ifdef __EMSCRIPTEN__
+	class SharedMemory {
+	public:
+		SharedMemory() : base(nullptr) {}
+		SharedMemory(SharedMemory&& other) NOEXCEPT : base(other.base), size(other.size) {
+			other.base = nullptr;
+		}
+		SharedMemory& operator=(SharedMemory&& other) NOEXCEPT {
+			std::swap(base, other.base);
+			std::swap(size, other.size);
+			return *this;
+		}
+		~SharedMemory() {
+			Close();
+		}
+		void Close() {
+			//XXX
+		}
+		explicit operator bool() const {
+			return !!base;
+		}
+
+		static SharedMemory Create(size_t size) {
+			SharedMemory m;
+			m.base = ::operator new(size);
+			m.size = size;
+			return m;
+		}
+
+		void* GetBase() const {
+			return base;
+		}
+		size_t GetSize() const {
+			return size;
+		}
+
+		void* base;
+		size_t size;
+	};
+#else
 	class SharedMemory {
 	public:
 		SharedMemory() : handle(Sys::INVALID_HANDLE) {}
@@ -154,6 +198,7 @@ namespace IPC {
 		void* base;
 		size_t size;
 	};
+#endif
 
 } // namespace IPC
 
@@ -181,6 +226,18 @@ namespace Util {
 		}
 	};
 	template<> struct SerializeTraits<IPC::SharedMemory> {
+#ifdef __EMSCRIPTEN__
+		static void Write(Writer& stream, const IPC::SharedMemory& value)
+		{
+			stream.WriteData(&value, sizeof(value));
+		}
+		static IPC::SharedMemory Read(Reader& stream)
+		{
+			IPC::SharedMemory m;
+			stream.ReadData(&m, sizeof(m));
+			return m;
+		}
+#else
 		static void Write(Writer& stream, const IPC::SharedMemory& value)
 		{
 			stream.WriteHandle(value.GetDesc());
@@ -189,6 +246,7 @@ namespace Util {
 		{
 			return IPC::SharedMemory::FromDesc(stream.ReadHandle());
 		}
+#endif
 	};
 
 } // namespace Util

@@ -33,6 +33,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Primitives.h"
 
+#ifdef __EMSCRIPTEN__
+namespace IPC {
+    struct Channel {
+        Util::Writer reply;
+    };
+}
+void DoSyscall(uint32_t id, Util::Reader reader, IPC::Channel& channel);
+#endif
+
 namespace IPC {
 
     /*
@@ -81,6 +90,7 @@ namespace IPC {
         static const bool TOPLEVEL_MSG_ALLOWED = false;
     #endif
 
+#ifndef __EMSCRIPTEN__
     class Channel {
     public:
         Channel()
@@ -132,6 +142,7 @@ namespace IPC {
         bool canSendSyncMsg;
         bool canSendAsyncMsg;
     };
+#endif
 
     namespace detail {
 
@@ -141,6 +152,13 @@ namespace IPC {
             using Message = Message<Id, MsgArgs...>;
             static_assert(sizeof...(Args) == std::tuple_size<typename Message::Inputs>::value, "Incorrect number of arguments for IPC::SendMsg");
 
+#ifdef __EMSCRIPTEN__
+            Util::Writer writer;
+            writer.WriteArgs(Util::TypeListFromTuple<typename Message::Inputs>(), std::forward<Args>(args)...);
+            Util::Reader reader;
+            reader.data = std::move(writer.data);
+            DoSyscall(Message::id, std::move(reader), channel);
+#else
             if (!channel.canSendAsyncMsg)
                 Sys::Drop("Attempting to send a Message in VM toplevel with id: 0x%x", Message::id);
 
@@ -148,12 +166,24 @@ namespace IPC {
             writer.Write<uint32_t>(Message::id);
             writer.WriteArgs(Util::TypeListFromTuple<typename Message::Inputs>(), std::forward<Args>(args)...);
             channel.SendMsg(writer);
+#endif
         }
         template<typename Func, typename Msg, typename Reply, typename... Args> void SendMsg(Channel& channel, Func&& messageHandler, SyncMessage<Msg, Reply>, Args&&... args)
         {
             using Message = SyncMessage<Msg, Reply>;
             static_assert(sizeof...(Args) == std::tuple_size<typename Message::Inputs>::value + std::tuple_size<typename Message::Outputs>::value, "Incorrect number of arguments for IPC::SendMsg");
 
+#ifdef __EMSCRIPTEN__
+            Util::Writer writer;
+            writer.WriteArgs(Util::TypeListFromTuple<typename Message::Inputs>(), std::forward<Args>(args)...);
+            Util::Reader reader;
+            reader.data = std::move(writer.data);
+            DoSyscall(Message::id, std::move(reader), channel);
+            Util::Reader reply;
+            reply.data = std::move(channel.reply.data);
+            auto out = std::forward_as_tuple(std::forward<Args>(args)...);
+            reply.FillTuple<std::tuple_size<typename Message::Inputs>::value>(Util::TypeListFromTuple<typename Message::Outputs>(), out);
+#else
             if (!channel.canSendSyncMsg)
                 Sys::Drop("Attempting to send a SyncMessage while handling a Message or in VM toplevel with id: 0x%x", Message::id);
 
@@ -173,6 +203,7 @@ namespace IPC {
                 }
                 messageHandler(id, std::move(reader));
             }
+#endif
         }
 
         // Map a tuple to get the actual types returned by SerializeTraits::Read instead of the declared types
@@ -193,6 +224,9 @@ namespace IPC {
             reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
             reader.CheckEndRead();
 
+#ifdef __EMSCRIPTEN__
+            Util::apply(std::forward<Func>(func), std::move(inputs));
+#else
             bool oldSync = channel.canSendSyncMsg;
             bool oldAsync = channel.canSendAsyncMsg;
             channel.canSendSyncMsg = false;
@@ -200,6 +234,7 @@ namespace IPC {
             Util::apply(std::forward<Func>(func), std::move(inputs));
             channel.canSendSyncMsg = oldSync;
             channel.canSendAsyncMsg = oldAsync;
+#endif
         }
         template<typename Func, typename Msg, typename Reply> void HandleMsg(Channel& channel, SyncMessage<Msg, Reply>, Util::Reader reader, Func&& func)
         {
@@ -210,6 +245,12 @@ namespace IPC {
             reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
             reader.CheckEndRead();
 
+#ifdef __EMSCRIPTEN__
+            Util::apply(std::forward<Func>(func), std::tuple_cat(Util::ref_tuple(std::move(inputs)), Util::ref_tuple(outputs)));
+            Util::Writer writer;
+            writer.WriteTuple(Util::TypeListFromTuple<typename Message::Outputs>(), std::move(outputs));
+            channel.reply = std::move(writer);
+#else
             bool oldSync = channel.canSendSyncMsg;
             bool oldAsync = channel.canSendAsyncMsg;
             channel.canSendSyncMsg = true;
@@ -222,6 +263,7 @@ namespace IPC {
             writer.Write<uint32_t>(ID_RETURN);
             writer.WriteTuple(Util::TypeListFromTuple<typename Message::Outputs>(), std::move(outputs));
             channel.SendMsg(writer);
+#endif
         }
 
     } // namespace detail

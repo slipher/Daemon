@@ -37,6 +37,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 IPC::Channel VM::rootChannel;
 
+#ifdef __EMSCRIPTEN__
+#include "engine/framework/VirtualMachine.h"
+void DoSyscall(uint32_t id, Util::Reader reader, IPC::Channel& channel) {
+	VM::activeVM->Syscall(id, std::move(reader), channel);
+}
+#else
+
 // Special exception type used to cleanly exit a thread for in-process VMs
 #ifdef BUILD_VM_IN_PROCESS
 // Using an anonymous namespace so the compiler knows that the exception is
@@ -150,4 +157,5 @@ int main(int argc, char** argv)
 	}
 }
 
+#endif
 #endif

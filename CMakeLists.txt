@@ -24,7 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 3.1)
 if (POLICY CMP0017)
     cmake_policy(SET CMP0017 NEW)
 endif()
@@ -485,7 +485,7 @@ endif()
 
 # zlib
 if (EMSCRIPTEN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s DISABLE_EXCEPTION_CATCHING=0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_ZLIB=1")
 elseif (NOT NACL)
     find_package(ZLIB REQUIRED)
@@ -551,15 +551,17 @@ if (BUILD_CLIENT OR BUILD_TTY_CLIENT OR BUILD_SERVER)
         include_directories(${GeoIP_INCLUDE_DIRS})
     endif()
 
-    # Nettle
-    find_package(Nettle REQUIRED)
-    include_directories(${NETTLE_INCLUDE_DIR})
-    set(LIBS_ENGINE ${LIBS_ENGINE} ${NETTLE_LIBRARIES})
+     if (NOT EMSCRIPTEN)
+        # Nettle
+        find_package(Nettle REQUIRED)
+        include_directories(${NETTLE_INCLUDE_DIR})
+        set(LIBS_ENGINE ${LIBS_ENGINE} ${NETTLE_LIBRARIES})
 
-    # GMP
-    find_package(GMP REQUIRED)
-    include_directories(${GMP_INCLUDE_DIR})
-    set(LIBS_ENGINE ${LIBS_ENGINE} ${GMP_LIBRARIES})
+        # GMP
+        find_package(GMP REQUIRED)
+        include_directories(${GMP_INCLUDE_DIR})
+        set(LIBS_ENGINE ${LIBS_ENGINE} ${GMP_LIBRARIES})
+    endif()
 endif()
 
 if (BUILD_CLIENT OR BUILD_TTY_CLIENT)
@@ -682,6 +684,11 @@ if (BUILD_CLIENT)
     set(LIBS_CLIENT ${LIBS_CLIENT} ${OPENAL_LIBRARY})
 endif()
 
+if (EMSCRIPTEN)
+    set(CMAKE_EXECUTABLE_SUFFIX .html)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/emscripten-template.html")
+endif()
+
 ################################################################################
 # Engine
 ################################################################################
@@ -763,13 +770,28 @@ if (BUILD_CLIENT)
     endforeach()
 endif()
 
+set(UNV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+set(GAMELOGIC_DIR ${UNV_DIR}/src)
+include(${UNV_DIR}/src.cmake)
+include_directories(${UNV_DIR}/src)
+include(DaemonCBSE)
+CBSE("sgame"
+     "${GAMELOGIC_DIR}/sgame/entities.yaml"
+     "${GAMELOGIC_DIR}/sgame/"
+     "${UNV_DIR}/src/utils/cbse")
+set(SERVER_SGAME_LIST ${SGAMELIST} ${SHAREDLIST} ${SHAREDLIST_sgame} ${sgame_GENERATED_CBSE})
+
+set_source_files_properties(${ENGINE_DIR}/framework/System.cpp PROPERTIES COMPILE_FLAGS "--preload-file ${UNV_DIR}/pkg@/homepath/pkg")
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/empty.cpp PROPERTIES COMPILE_FLAGS "--preload-file ${UNV_DIR}/pkg@/homepath/pkg")
+
 if (BUILD_SERVER)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --preload-file ${UNV_DIR}/pkg@/homepath/pkg")
     AddApplication(
         Target server
         ExecutableName daemonded
-        Definitions BUILD_ENGINE BUILD_SERVER
+        Definitions BUILD_ENGINE BUILD_SERVER BUILD_SGAME
         Flags ${WARNINGS}
-        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${DEDSERVERLIST}
+        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${DEDSERVERLIST} ${SERVER_SGAME_LIST}
         Libs ${LIBS_ENGINE}
     )
 endif()
@@ -789,7 +811,7 @@ endif()
 # Runtime dependencies
 ################################################################################
 
-if (BUILD_CLIENT OR BUILD_SERVER OR BUILD_TTY_CLIENT)
+if ((BUILD_CLIENT OR BUILD_SERVER OR BUILD_TTY_CLIENT) AND NOT EMSCRIPTEN)
     add_custom_target(runtime_deps)
     set_target_properties(runtime_deps PROPERTIES FOLDER "CMakePlumbing")
 

@@ -120,7 +120,7 @@ namespace Util {
 		{
 			WriteTuple(Types(), std::forward<Tuple>(tuple), Util::gen_seq<std::tuple_size<typename std::decay<Tuple>::type>::value>());
 		}
-	private:
+	//private:
 		std::vector<char> data;
 		std::vector<IPC::FileDesc> handles;
 	};
@@ -213,7 +213,7 @@ namespace Util {
 			return handles;
 		}
 
-	private:
+	//private:
 		std::vector<char> data;
 		std::vector<IPC::FileDesc> handles;
 		size_t pos;

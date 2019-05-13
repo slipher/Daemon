@@ -32,7 +32,7 @@ function(maybe_add_dep target dep)
     endif()
 endfunction()
 
-function(CBSE target definition output)
+function(CBSE target definition output cbse_dir)
     # Check if python has all the dependencies
     # TODO: Execute pip directly here and install them
     execute_process(
@@ -49,18 +49,18 @@ function(CBSE target definition output)
         OUTPUT ${GENERATED_CBSE}
         COMMENT "Generating CBSE entities for ${definition}"
         DEPENDS ${definition}
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/CBSE.py
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/templates/Backend.cpp
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/templates/Backend.h
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/templates/Component.cpp
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/templates/Component.h
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/templates/Components.h
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/templates/Entities.h
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/templates/Helper.h
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/utils/cbse
+                ${cbse_dir}/CBSE.py
+                ${cbse_dir}/templates/Backend.cpp
+                ${cbse_dir}/templates/Backend.h
+                ${cbse_dir}/templates/Component.cpp
+                ${cbse_dir}/templates/Component.h
+                ${cbse_dir}/templates/Components.h
+                ${cbse_dir}/templates/Entities.h
+                ${cbse_dir}/templates/Helper.h
+        WORKING_DIRECTORY ${cbse_dir}
         COMMAND
                 ${PYTHON_EXECUTABLE}
-                ${CMAKE_SOURCE_DIR}/src/utils/cbse/CBSE.py
+                ${cbse_dir}/CBSE.py
                 -s -o
                 "${output}"
                 "${definition}"

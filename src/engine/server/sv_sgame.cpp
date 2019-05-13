@@ -36,7 +36,9 @@ Maryland 20850 USA.
 
 #include "server.h"
 #include "sg_msgdef.h"
+#ifndef __EMSCRIPTEN__
 #include "qcommon/crypto.h"
+#endif
 #include "qcommon/sys.h"
 #include "framework/CommonVMServices.h"
 #include "framework/CommandSystem.h"
@@ -131,6 +133,7 @@ SV_RSAGenMsg
 Generate an encrypted RSA message
 ===============
 */
+#ifndef __EMSCRIPTEN__
 int SV_RSAGenMsg( const char *pubkey, char *cleartext, char *encrypted )
 {
 	struct rsa_public_key public_key;
@@ -156,6 +159,7 @@ int SV_RSAGenMsg( const char *pubkey, char *cleartext, char *encrypted )
 	mpz_clear( message );
 	return retval;
 }
+#endif
 
 /*
 ===============
@@ -553,11 +557,13 @@ void GameVM::QVMSyscall(int index, Util::Reader& reader, IPC::Channel& channel)
 
 	case G_RSA_GENMSG:
 		IPC::HandleMsg<RSAGenMsgMsg>(channel, std::move(reader), [this](std::string pubkey, int& res, std::string& cleartext, std::string& encrypted) {
+#ifndef __EMSCRIPTEN__
 			char cleartextBuffer[RSA_STRING_LENGTH];
 			char encryptedBuffer[RSA_STRING_LENGTH];
 			res = SV_RSAGenMsg(pubkey.c_str(), cleartextBuffer, encryptedBuffer);
 			cleartext = cleartextBuffer;
 			encrypted = encryptedBuffer;
+#endif
 		});
 		break;
 

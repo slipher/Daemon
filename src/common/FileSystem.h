@@ -488,6 +488,10 @@ std::string DefaultHomePath();
 void Initialize(Str::StringRef homePath, Str::StringRef libPath, const std::vector<std::string>& paths);
 #endif
 
+#ifdef __EMSCRIPTEN__
+inline void Initialize() {}
+#endif
+
 // Flush write buffers for all open files, useful in case of an unclean shutdown
 void FlushAll();
 

@@ -32,6 +32,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "qcommon/sys.h"
 #include "VirtualMachine.h"
 
+#ifdef __EMSCRIPTEN__
+
+uint32_t VM::VMBase::Create() { return 3; }
+void VM::VMBase::Free() {}
+VM::VMBase* VM::activeVM;
+
+#else
+
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -499,3 +507,5 @@ void VMBase::Free()
 }
 
 } // namespace VM
+
+#endif

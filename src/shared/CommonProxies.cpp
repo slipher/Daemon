@@ -36,15 +36,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool ConsoleCommand();
 void CompleteCommand(int);
 
+#ifdef __EMSCRIPTEN__
+#define N0 namespace {
+#define N1 }
+#else
+#define N0
+#define N1
+#endif
+
+N0
 const char* Trans_Gettext(const char* text) {
     return text;
 }
+N1
 
 //TODO END HACK
 
 // Command related syscall handling
 
-namespace Cmd {
+namespace Cmd { N0
 
     // This is a proxy environment given to commands, to replicate the common API
     // Calls to its methods will be proxied to Cmd::GetEnv() in the engine.
@@ -152,7 +162,7 @@ namespace Cmd {
                 Sys::Drop("Unhandled engine command syscall %i", minor);
         }
     }
-}
+N1 }
 
 // Simulation of the command-related trap calls
 // The old VM command code registers the command as a string. When the engine calls the command
@@ -276,7 +286,7 @@ namespace Cmd {
 
 // Cvar related commands
 
-namespace Cvar{
+namespace Cvar{ N0
 
     // Commands can be statically initialized so we must store the registration parameters
     // so that we can register them after main
@@ -365,7 +375,7 @@ namespace Cvar{
                 Sys::Drop("Unhandled engine cvar syscall %i", minor);
         }
     }
-}
+N1 }
 
 // In the QVMs are used registered through vmCvar_t which contains a copy of the values of the cvar
 // each frame will call Cvar_Update for each cvar. Previously the cvar system would use a modification
@@ -468,13 +478,13 @@ void trap_Cvar_AddFlags(const char* varName, int flags) {
 
 // Log related commands
 
-namespace Log {
+namespace Log { N0
 
     void Dispatch(Event event, int targetControl) {
         VM::SendMsg<VM::DispatchLogEventMsg>(event.text, targetControl);
     }
 
-}
+N1 }
 
 // Common functions for all syscalls
 

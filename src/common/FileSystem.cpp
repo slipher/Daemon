@@ -1081,8 +1081,13 @@ static void ParseDeps(const PakInfo& parent, Str::StringRef depsData, std::error
 			const PakInfo* pak = FindPak(name);
 			if (!pak) {
 				fsLogs.Warn("Could not find pak '%s' required by '%s'", name, parent.path);
+#ifdef __EMSCRIPTEN__
+				lineStart = lineEnd == depsData.end() ? lineEnd : lineEnd + 1;
+				continue;
+#else
 				SetErrorCodeFilesystem(err, filesystem_error::missing_dependency);
 				return;
+#endif
 			}
 			LoadPak(*pak, err);
 			if (err)
@@ -2210,7 +2215,6 @@ static Util::optional<std::string> GetRealPath(Str::StringRef path, std::string&
 
 void Initialize(Str::StringRef homePath, Str::StringRef libPath, const std::vector<std::string>& paths)
 {
-#ifndef __EMSCRIPTEN__
 	// Create the homepath and its pkg directory to avoid any issues later on
 	std::error_code err;
 	RawPath::CreatePathTo(FS::Path::Build(homePath, "pkg") + "/", err);
@@ -2257,7 +2261,6 @@ void Initialize(Str::StringRef homePath, Str::StringRef libPath, const std::vect
 		fsLogs.Warn("No pak search paths found");
 
 	RefreshPaks();
-#endif
 }
 #endif
 
