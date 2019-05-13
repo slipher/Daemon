@@ -125,6 +125,10 @@ else()
 endif()
 set(WARNMODE ${WARNMODE} PARENT_SCOPE)
 
+if (EMSCRIPTEN)
+    set(MONOLITHIC 1)
+endif()
+
 include(CMakeParseArguments)
 include(DaemonPlatform)
 
@@ -428,7 +432,7 @@ if (NACL)
     add_library(srclibs-nacl-module EXCLUDE_FROM_ALL ${NACLLIST_MODULE})
     set_target_properties(srclibs-nacl-module PROPERTIES POSITION_INDEPENDENT_CODE 1 FOLDER "libs")
     set(LIBS_BASE ${LIBS_BASE} srclibs-nacl-module)
-elseif (NOT EMSCRIPTEN)
+elseif (NOT MONOLITHIC)
     add_library(srclibs-nacl-native EXCLUDE_FROM_ALL ${NACLLIST_NATIVE})
     set_target_properties(srclibs-nacl-native PROPERTIES POSITION_INDEPENDENT_CODE 1 FOLDER "libs")
     set(LIBS_BASE ${LIBS_BASE} srclibs-nacl-native)
@@ -551,7 +555,7 @@ if (BUILD_CLIENT OR BUILD_TTY_CLIENT OR BUILD_SERVER)
         include_directories(${GeoIP_INCLUDE_DIRS})
     endif()
 
-     if (NOT EMSCRIPTEN)
+     if (NOT MONOLITHIC)
         # Nettle
         find_package(Nettle REQUIRED)
         include_directories(${NETTLE_INCLUDE_DIR})
@@ -770,22 +774,26 @@ if (BUILD_CLIENT)
     endforeach()
 endif()
 
-set(UNV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
-set(GAMELOGIC_DIR ${UNV_DIR}/src)
-include(${UNV_DIR}/src.cmake)
-include_directories(${UNV_DIR}/src)
-include(DaemonCBSE)
-CBSE("sgame"
-     "${GAMELOGIC_DIR}/sgame/entities.yaml"
-     "${GAMELOGIC_DIR}/sgame/"
-     "${UNV_DIR}/src/utils/cbse")
-set(SERVER_SGAME_LIST ${SGAMELIST} ${SHAREDLIST} ${SHAREDLIST_sgame} ${sgame_GENERATED_CBSE})
-
-set_source_files_properties(${ENGINE_DIR}/framework/System.cpp PROPERTIES COMPILE_FLAGS "--preload-file ${UNV_DIR}/pkg@/homepath/pkg")
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/empty.cpp PROPERTIES COMPILE_FLAGS "--preload-file ${UNV_DIR}/pkg@/homepath/pkg")
+if (MONOLITHIC)
+    if (NOT EMSCRIPTEN)
+        add_definitions(-D__EMSCRIPTEN__)
+    endif()
+    set(UNV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+    set(GAMELOGIC_DIR ${UNV_DIR}/src)
+    include(${UNV_DIR}/src.cmake)
+    include_directories(${UNV_DIR}/src)
+    include(DaemonCBSE)
+    CBSE("sgame"
+         "${GAMELOGIC_DIR}/sgame/entities.yaml"
+         "${GAMELOGIC_DIR}/sgame/"
+         "${UNV_DIR}/src/utils/cbse")
+    set(SERVER_SGAME_LIST ${SGAMELIST} ${SHAREDLIST} ${SHAREDLIST_sgame} ${sgame_GENERATED_CBSE})
+endif()
 
 if (BUILD_SERVER)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --preload-file ${UNV_DIR}/pkg@/homepath/pkg")
+    if (EMSCRIPTEN)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --preload-file ${UNV_DIR}/pkg@/homepath/pkg")
+    endif()
     AddApplication(
         Target server
         ExecutableName daemonded
@@ -811,7 +819,7 @@ endif()
 # Runtime dependencies
 ################################################################################
 
-if ((BUILD_CLIENT OR BUILD_SERVER OR BUILD_TTY_CLIENT) AND NOT EMSCRIPTEN)
+if ((BUILD_CLIENT OR BUILD_SERVER OR BUILD_TTY_CLIENT) AND NOT MONOLITHIC)
     add_custom_target(runtime_deps)
     set_target_properties(runtime_deps PROPERTIES FOLDER "CMakePlumbing")
 
