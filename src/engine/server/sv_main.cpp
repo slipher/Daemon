@@ -1500,7 +1500,7 @@ void SV_PrintTranslatedText( const char *text, bool broadcast, bool plural )
 {
 	Cmd_SaveCmdContext();
 	Cmd_TokenizeString( text );
-	Log::Notice( "%s%s", broadcast ? "Broadcast: " : "", TranslateText_Internal( plural, 1 ) );
+	Log::defaultLogger.WithoutSuppression().Notice( "%s%s", broadcast ? "Broadcast: " : "", TranslateText_Internal( plural, 1 ) );
 	Cmd_RestoreCmdContext();
 }
 
