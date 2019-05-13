@@ -166,8 +166,8 @@ static std::vector<const Cmd::Args*> argStack;
 // then it called the completion syscall CompleteCommand that called trap_CompleteCallback
 // with the potential values. Our new system returns a vector of candidates so we fake the
 // trap_CompleteCallback call to add the candidate to our vector
-Cmd::CompletionResult completeMatches;
-std::string completedPrefix;
+static Cmd::CompletionResult completeMatches;
+static std::string completedPrefix;
 
 void trap_CompleteCallback( const char *complete ) {
     // The callback is called for each valid arg, without filtering so do it here

@@ -431,10 +431,10 @@ struct proxyInfo_t{
 };
 
 //Contains the commands given through the C interface
-std::unordered_map<std::string, proxyInfo_t, Str::IHash, Str::IEqual> proxies;
+static std::unordered_map<std::string, proxyInfo_t, Str::IHash, Str::IEqual> proxies;
 
-Cmd::CompletionResult completeMatches;
-std::string completedPrefix;
+static Cmd::CompletionResult completeMatches;
+static std::string completedPrefix;
 
 //Is registered in the new command system for all the commands registered through the C interface.
 class ProxyCmd: public Cmd::CmdBase {
