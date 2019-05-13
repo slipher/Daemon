@@ -792,6 +792,14 @@ endif()
 
 if (BUILD_SERVER)
     if (EMSCRIPTEN)
+        # Minimal list of paks to get bots (and turrets) killing each other:
+        # map-plat23_1.13.1.dpk
+        # res-buildables_0.51.dpk
+        # res-players_0.51.dpk
+        # res-weapons_0.51.dpk
+        # unvanquished_src.dpkdir
+        #
+        # Also Unvanquished repo is at 2f3bddb8
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --preload-file ${UNV_DIR}/pkg@/homepath/pkg")
     endif()
     AddApplication(
