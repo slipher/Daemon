@@ -140,7 +140,7 @@ public:
 	Util::Reader GameHandleSyscall(uint32_t id, Util::Writer writer) {
 		Util::Reader r;
 		r.data = std::move(writer.data);
-		VM::VMHandleSyscall(id, std::move(r));
+		vmhandlesyscall(id, std::move(r));
 		Util::Reader reply;
 		reply.data = std::move(VM::rootChannel.reply.data);
 		return reply;
@@ -154,6 +154,8 @@ public:
 		auto out = std::forward_as_tuple(std::forward<Args>(args)...);
 		reply.FillTuple<std::tuple_size<typename Msg::Inputs>::value>(Util::TypeListFromTuple<typename Msg::Outputs>(), out);
 	}
+	void(*vmhandlesyscall)(uint32_t, Util::Reader);
+
 #else
 	// Send a message to the VM
 	template<typename Msg, typename... Args> void SendMsg(Args&&... args)

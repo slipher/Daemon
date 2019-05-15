@@ -47,6 +47,10 @@ Maryland 20850 USA.
 serverStatic_t svs; // persistent server info
 server_t       sv; // local server
 GameVM         gvm; // game virtual machine
+bool SgameActive() {
+    VM::VMBase* gvmb = &gvm;
+    return VM::activeVM == gvmb;
+}
 
 cvar_t         *sv_fps; // time rate for running non-clients
 cvar_t         *sv_timeout; // seconds without any message

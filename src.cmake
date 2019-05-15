@@ -1,5 +1,5 @@
 set(SHAREDLIST
-#XXX    ${MOUNT_DIR}/shared/CommandBufferClient.cpp
+    ${MOUNT_DIR}/shared/CommandBufferClient.cpp
     ${MOUNT_DIR}/shared/CommandBufferClient.h
     ${MOUNT_DIR}/shared/CommonProxies.cpp
     ${MOUNT_DIR}/shared/CommonProxies.h

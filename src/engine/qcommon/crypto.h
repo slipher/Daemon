@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __CRYPTO_H__
 #define __CRYPTO_H__
 
+#ifndef __EMSCRIPTEN__
+
 #include "q_shared.h"
 #include "qcommon.h"
 
@@ -38,5 +40,7 @@ using NettleLength = std::conditional<std::is_same<nettle_random_func, void(void
 
 // Random function used for key generation and encryption
 void     qnettle_random( void *ctx, NettleLength length, uint8_t *dst );
+
+#endif
 
 #endif /* __CRYPTO_H__ */

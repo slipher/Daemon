@@ -57,9 +57,11 @@ namespace IPC {
             return;
         }
 
+#ifndef __EMSCRIPTEN__
         if (!VM::rootChannel.canSendSyncMsg) {
             Sys::Drop("Trying to Flush the %s command buffer when handling an async message or in toplevel", name);
         }
+#endif
 
         buffer.LoadReaderData();
         if (buffer.GetMaxReadLength() == 0) {
@@ -69,9 +71,11 @@ namespace IPC {
     }
 
     void CommandBufferClient::Write(Util::Writer& writer) {
+#ifndef __EMSCRIPTEN__
         if (!VM::rootChannel.canSendSyncMsg) {
             Sys::Drop("Trying to write to the %s command buffer when handling an async message or in toplevel", name);
         }
+#endif
         auto& writerData = writer.GetData();
         uint32_t dataSize = writerData.size();
         uint32_t totalSize = dataSize + sizeof(uint32_t);

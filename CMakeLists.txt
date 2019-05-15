@@ -489,7 +489,7 @@ endif()
 
 # zlib
 if (EMSCRIPTEN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE='clamp'")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s USE_FREETYPE=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE='clamp' -s TOTAL_MEMORY=268435456")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_ZLIB=1")
 elseif (NOT NACL)
     find_package(ZLIB REQUIRED)
@@ -569,10 +569,12 @@ if (BUILD_CLIENT OR BUILD_TTY_CLIENT OR BUILD_SERVER)
 endif()
 
 if (BUILD_CLIENT OR BUILD_TTY_CLIENT)
-    # CURL
-    find_package(CURL REQUIRED)
-    include_directories(${CURL_INCLUDE_DIRS})
-    set(LIBS_CLIENTBASE ${LIBS_CLIENTBASE} ${CURL_LIBRARIES})
+    if (NOT MONOLITHIC)
+        # CURL
+        find_package(CURL REQUIRED)
+        include_directories(${CURL_INCLUDE_DIRS})
+        set(LIBS_CLIENTBASE ${LIBS_CLIENTBASE} ${CURL_LIBRARIES})
+    endif()
 
     # Mumble link
     add_library(srclibs-mumblelink EXCLUDE_FROM_ALL ${MUMBLELINKLIST})
@@ -777,17 +779,43 @@ endif()
 if (MONOLITHIC)
     if (NOT EMSCRIPTEN)
         add_definitions(-D__EMSCRIPTEN__)
+
+        find_package(Freetype REQUIRED)
+        include_directories(${FREETYPE_INCLUDE_DIRS})
     endif()
     set(UNV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
     set(GAMELOGIC_DIR ${UNV_DIR}/src)
     include(${UNV_DIR}/src.cmake)
     include_directories(${UNV_DIR}/src)
+    include_directories(${EXTERNAL_DEPS_DIR}/mingw64-4/include) #XXX lua.h
     include(DaemonCBSE)
     CBSE("sgame"
          "${GAMELOGIC_DIR}/sgame/entities.yaml"
          "${GAMELOGIC_DIR}/sgame/"
          "${UNV_DIR}/src/utils/cbse")
     set(SERVER_SGAME_LIST ${SGAMELIST} ${SHAREDLIST} ${SHAREDLIST_sgame} ${sgame_GENERATED_CBSE})
+    set(CLIENT_GAMELOGIC_LIST ${SERVER_SGAME_LIST} ${CGAMELIST} ${SHAREDLIST_cgame})
+    set_property(SOURCE ${GAMELOGIC_DIR}/cgame/cg_api.cpp
+                 APPEND PROPERTY COMPILE_DEFINITIONS VMHandleSyscall=cg_VMHandleSyscall)
+    set_property(SOURCE ${GAMELOGIC_DIR}/cgame/cg_api.cpp
+                 APPEND PROPERTY COMPILE_DEFINITIONS VM_API_VERSION=cg_VM_API_VERSION)
+    set_property(SOURCE ${GAMELOGIC_DIR}/cgame/cg_consolecmds.cpp
+                 APPEND PROPERTY COMPILE_DEFINITIONS CompleteCommand=cg_CompleteCommand)
+    set_property(SOURCE ${GAMELOGIC_DIR}/cgame/cg_consolecmds.cpp
+                 APPEND PROPERTY COMPILE_DEFINITIONS ConsoleCommand=cg_ConsoleCommand)
+    set_property(SOURCE ${GAMELOGIC_DIR}/cgame/cg_main.cpp
+                 APPEND PROPERTY COMPILE_DEFINITIONS CG_Rocket_LoadHuds=trap_S_EndRegistration)
+
+    set(tmp_source_dir ${CMAKE_CURRENT_SOURCE_DIR})
+    set(CMAKE_CURRENT_SOURCE_DIR ${UNV_DIR})
+    if (EMSCRIPTEN)
+        set(FREETYPE_INCLUDE_DIRS nowhere)
+    endif()
+    include(${UNV_DIR}/libRocket.cmake)
+    include_directories(${ROCKET_INCLUDE_DIRS})
+    set(CMAKE_CURRENT_SOURCE_DIR ${tmp_source_dir})
+
+    add_library(fakelua ${CMAKE_CURRENT_SOURCE_DIR}/fakelua.c)
 endif()
 
 if (BUILD_SERVER)
@@ -816,10 +844,10 @@ if (BUILD_TTY_CLIENT)
     AddApplication(
         Target ttyclient
         ExecutableName daemon-tty
-        Definitions BUILD_ENGINE BUILD_TTY_CLIENT
+        Definitions BUILD_ENGINE BUILD_TTY_CLIENT BUILD_SGAME BUILD_CGAME ROCKET_STATIC_LIB
         Flags ${WARNINGS}
-        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${CLIENTBASELIST} ${TTYCLIENTLIST}
-        Libs ${LIBS_CLIENTBASE} ${LIBS_ENGINE}
+        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${CLIENTBASELIST} ${TTYCLIENTLIST} ${CLIENT_GAMELOGIC_LIST}
+        Libs ${LIBS_CLIENTBASE} ${LIBS_ENGINE} ROCKET_LIB fakelua ${FREETYPE_LIBRARIES}
     )
 endif()
 

@@ -36,9 +36,7 @@ Maryland 20850 USA.
 
 #include "server.h"
 #include "sg_msgdef.h"
-#ifndef __EMSCRIPTEN__
 #include "qcommon/crypto.h"
-#endif
 #include "qcommon/sys.h"
 #include "framework/CommonVMServices.h"
 #include "framework/CommandSystem.h"
@@ -339,6 +337,7 @@ void SV_InitGameProgs()
 }
 
 GameVM::GameVM(): VM::VMBase("sgame", Cvar::NONE), services(nullptr) {
+	vmhandlesyscall = VM::VMHandleSyscall;
 }
 
 void GameVM::Start()
@@ -578,10 +577,14 @@ void GameVM::QVMSyscall(int index, Util::Reader& reader, IPC::Channel& channel)
 
 	case G_GET_PLAYER_PUBKEY:
 		IPC::HandleMsg<GetPlayerPubkeyMsg>(channel, std::move(reader), [this](int clientNum, int len, std::string& pubkey) {
+#ifdef __EMSCRIPTEN__
+			pubkey = std::string(RSA_STRING_LENGTH - 1, 'a');
+#else
 			std::unique_ptr<char[]> buffer(new char[len]);
 			buffer[0] = '\0';
 			SV_GetPlayerPubkey(clientNum, buffer.get(), len);
 			pubkey.assign(buffer.get());
+#endif
 		});
 		break;
 

@@ -207,6 +207,7 @@ bool CL_HandleServerCommand(Str::StringRef text, std::string& newText) {
 		return false;
 	}
 
+#ifndef __EMSCRIPTEN__
 	if (cmd == "pubkey_decrypt") {
 		char         buffer[ MAX_STRING_CHARS ] = "pubkey_identify ";
 		NettleLength msg_len = MAX_STRING_CHARS - 16;
@@ -228,6 +229,7 @@ bool CL_HandleServerCommand(Str::StringRef text, std::string& newText) {
 		mpz_clear(message);
 		return false;
 	}
+#endif
 
 	return true;
 }
@@ -997,8 +999,10 @@ void  CL_OnTeamChanged( int newTeam )
 	Cmd::BufferCommandText( "exec -f " TEAMCONFIG_NAME );
 }
 
+namespace VM { void cg_VMHandleSyscall(uint32_t, Util::Reader); }
 CGameVM::CGameVM(): VM::VMBase("cgame", Cvar::CHEAT), services(nullptr), cmdBuffer("client")
 {
+	vmhandlesyscall = VM::cg_VMHandleSyscall;
 }
 
 void CGameVM::Start()
@@ -1076,7 +1080,9 @@ void CGameVM::CGameTextInputEvent(int c)
 
 void CGameVM::CGameRocketInit()
 {
+#ifndef __EMSCRIPTEN__
 	this->SendMsg<CGameRocketInitMsg>(cls.glconfig);
+#endif
 }
 
 void CGameVM::CGameRocketFrame()
@@ -1088,7 +1094,9 @@ void CGameVM::CGameRocketFrame()
 	Q_strncpyz( state.updateInfoString, cls.updateInfoString, sizeof( state.updateInfoString ) );
 	Q_strncpyz( state.messageString, clc.serverMessage, sizeof( state.messageString ) );
 	state.clientNum = cl.snap.ps.clientNum;
+#ifndef __EMSCRIPTEN__
 	this->SendMsg<CGameRocketFrameMsg>(state);
+#endif
 }
 
 void CGameVM::CGameConsoleLine(const std::string& str)
