@@ -1539,6 +1539,9 @@ image_t        *R_Create3DImage( const char *name,
 				 int bits, filterType_t filterType,
 				 wrapType_t wrapType )
 {
+#ifdef __EMSCRIPTEN__
+	return nullptr; //XXX
+#endif
 	image_t *image;
 	const byte **pics;
 	int i;
@@ -1591,11 +1594,15 @@ struct imageExtToLoaderMap_t
 // when there are multiple images of different formats available
 static const imageExtToLoaderMap_t imageLoaders[] =
 {
+#ifndef __EMSCRIPTEN__
 	{ "webp", LoadWEBP },
+#endif
 	{ "png",  LoadPNG  },
 	{ "tga",  LoadTGA  },
+#ifndef __EMSCRIPTEN__
 	{ "jpg",  LoadJPG  },
 	{ "jpeg", LoadJPG  },
+#endif
 	{ "dds",  LoadDDS  },
 	{ "crn",  LoadCRN  },
 	{ "ktx",  LoadKTX  },

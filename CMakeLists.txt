@@ -489,7 +489,7 @@ endif()
 
 # zlib
 if (EMSCRIPTEN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s USE_FREETYPE=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE='clamp' -s TOTAL_MEMORY=268435456")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s USE_FREETYPE=1 -s USE_SDL=2 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_LIBPNG=1 -s USE_OGG=1 -s USE_VORBIS=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE='clamp' -s TOTAL_MEMORY=268435456")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_ZLIB=1")
 elseif (NOT NACL)
     find_package(ZLIB REQUIRED)
@@ -583,7 +583,7 @@ if (BUILD_CLIENT OR BUILD_TTY_CLIENT)
 endif()
 
 # SDL, required for all targets on win32 because of iconv and SDL_SetHint(SDL_TIMER_RESOLUTION, 0)
-if (BUILD_CLIENT OR WIN32)
+if ((BUILD_CLIENT OR WIN32) AND NOT EMSCRIPTEN)
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIR})
     if (WIN32)
@@ -644,7 +644,7 @@ if (USE_BREAKPAD)
     endif()
 endif()
 
-if (BUILD_CLIENT)
+if (BUILD_CLIENT AND NOT EMSCRIPTEN)
     add_library(srclibs-openexr EXCLUDE_FROM_ALL ${OPENEXRLIST})
     set_target_properties(srclibs-openexr PROPERTIES POSITION_INDEPENDENT_CODE 1 FOLDER "libs")
     set(LIBS_CLIENT ${LIBS_CLIENT} srclibs-openexr)
@@ -736,46 +736,6 @@ if (NOT NACL)
     endif()
 endif()
 
-if (BUILD_CLIENT)
-    set(Definitions
-        BUILD_ENGINE BUILD_GRAPHICAL_CLIENT
-    )
-    if (USE_SMP)
-        list(APPEND Definitions USE_SMP)
-    endif()
-    AddApplication(
-        Target client
-        ExecutableName daemon
-        Definitions ${Definitions}
-        Flags ${WARNINGS}
-        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${CLIENTBASELIST} ${CLIENTLIST}
-        Libs ${LIBS_CLIENT} ${LIBS_CLIENTBASE} ${LIBS_ENGINE}
-    )
-
-    # generate glsl include files
-    set(GLSL_INCLUDE_DIR ${ENGINE_DIR}/renderer/glsl)
-    set(GLSL_SOURCE_DIR ${ENGINE_DIR}/renderer/glsl_source)
-
-    add_executable(include-bin ${LIB_DIR}/include-bin/main.cpp)
-
-    # create the glsl include directory if it doesn't exist
-    add_custom_command(OUTPUT ${GLSL_INCLUDE_DIR}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${GLSL_INCLUDE_DIR}
-    )
-
-    foreach(res ${GLSLSOURCELIST})
-        set(in ${res})
-        get_filename_component(filename ${in} NAME)
-        get_filename_component(filename_no_ext ${in} NAME_WE)
-        set(outpath ${GLSL_INCLUDE_DIR}/${filename_no_ext}.h)
-        add_custom_command(OUTPUT "${outpath}"
-            WORKING_DIRECTORY "${GLSL_SOURCE_DIR}"
-            COMMAND include-bin "${filename}" "${outpath}"
-            DEPENDS "${res}" "${GLSL_INCLUDE_DIR}"
-        )
-    endforeach()
-endif()
-
 if (MONOLITHIC)
     if (NOT EMSCRIPTEN)
         add_definitions(-D__EMSCRIPTEN__)
@@ -816,6 +776,48 @@ if (MONOLITHIC)
     set(CMAKE_CURRENT_SOURCE_DIR ${tmp_source_dir})
 
     add_library(fakelua ${CMAKE_CURRENT_SOURCE_DIR}/fakelua.c)
+endif()
+
+if (BUILD_CLIENT)
+    set(Definitions
+        BUILD_ENGINE BUILD_GRAPHICAL_CLIENT
+    )
+    if (USE_SMP)
+        list(APPEND Definitions USE_SMP)
+    endif()
+    AddApplication(
+        Target client
+        ExecutableName daemon
+        Definitions ${Definitions} BUILD_SGAME BUILD_CGAME ROCKET_STATIC_LIB
+        Flags ${WARNINGS}
+        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${CLIENTBASELIST} ${CLIENTLIST} ${CLIENT_GAMELOGIC_LIST}
+        Libs ${LIBS_CLIENT} ${LIBS_CLIENTBASE} ${LIBS_ENGINE} ROCKET_LIB fakelua
+    )
+
+    # generate glsl include files
+    set(GLSL_INCLUDE_DIR ${ENGINE_DIR}/renderer/glsl)
+    set(GLSL_SOURCE_DIR ${ENGINE_DIR}/renderer/glsl_source)
+
+    if (NOT MONOLITHIC)
+        add_executable(include-bin ${LIB_DIR}/include-bin/main.cpp)
+
+        # create the glsl include directory if it doesn't exist
+        add_custom_command(OUTPUT ${GLSL_INCLUDE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${GLSL_INCLUDE_DIR}
+        )
+
+        foreach(res ${GLSLSOURCELIST})
+            set(in ${res})
+            get_filename_component(filename ${in} NAME)
+            get_filename_component(filename_no_ext ${in} NAME_WE)
+            set(outpath ${GLSL_INCLUDE_DIR}/${filename_no_ext}.h)
+            add_custom_command(OUTPUT "${outpath}"
+                WORKING_DIRECTORY "${GLSL_SOURCE_DIR}"
+                COMMAND include-bin "${filename}" "${outpath}"
+                DEPENDS "${res}" "${GLSL_INCLUDE_DIR}"
+            )
+        endforeach()
+    endif()
 endif()
 
 if (BUILD_SERVER)

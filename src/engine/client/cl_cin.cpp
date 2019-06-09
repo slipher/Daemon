@@ -271,6 +271,7 @@ e_status CIN_RunCinematic( int handle )
 		return cinTable[ currentHandle ].status;
 	}
 
+#ifndef __EMSCRIPTEN__
 	if ( cinTable[ currentHandle ].fileType == filetype_t::FT_OGM )
 	{
 		if ( Cin_OGM_Run( cinTable[ currentHandle ].startTime == 0 ? 0 : CL_ScaledMilliseconds() - cinTable[ currentHandle ].startTime ) )
@@ -333,6 +334,7 @@ e_status CIN_RunCinematic( int handle )
 
 		return cinTable[ currentHandle ].status;
 	}
+#endif
 
 	return cinTable[ currentHandle ].status;
 }
@@ -383,6 +385,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 		fileextPtr++;
 	}
 
+#ifndef __EMSCRIPTEN__
 	if ( !Q_stricmp( fileextPtr, ".ogm" ) )
 	{
 		if ( Cin_OGM_Init( name ) )
@@ -432,6 +435,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 
 		return currentHandle;
 	}
+#endif
 
 	return -1;
 }

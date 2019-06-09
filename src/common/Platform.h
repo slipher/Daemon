@@ -51,6 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PLATFORM_STRING "Native Client"
 #elif defined(__EMSCRIPTEN__)
 #define PLATFORM_STRING "Emscripten"
+#define PATH_SEP '/'
 #else
 #error "Platform not supported"
 #endif

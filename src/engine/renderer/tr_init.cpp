@@ -304,6 +304,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 			if ( !GLimp_Init() )
 			{
+				Log::Warn("GLimp_Init failed");
 				return false;
 			}
 
@@ -601,10 +602,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	*/
 	static void RB_TakeScreenshotJPEG( int x, int y, int width, int height, const char *fileName )
 	{
+#ifndef __EMSCRIPTEN__
 		byte *buffer = RB_ReadPixels( x, y, width, height, 0 );
 
 		SaveJPG( fileName, 90, width, height, buffer );
 		ri.Hunk_FreeTempMemory( buffer );
+#endif
 	}
 
 	/*
@@ -767,9 +770,10 @@ ScreenshotCmd screenshotPNGRegistration("screenshotPNG", ssFormat_t::SSF_PNG, "p
 				{
 					memmove( captureBuffer + i * lineLen, pixels + i * captureLineLen, lineLen );
 				}
-
+#ifndef __EMSCRIPTEN__
 				outputSize = SaveJPGToBuffer( encodeBuffer, 3 * width * height, 90, width, height, captureBuffer );
 				ri.CL_WriteAVIVideoFrame( encodeBuffer, outputSize );
+#endif
 			}
 			else
 			{
@@ -1381,6 +1385,7 @@ ScreenshotCmd screenshotPNGRegistration("screenshotPNG", ssFormat_t::SSF_PNG, "p
 
 		if ( !InitOpenGL() )
 		{
+			Log::Warn("InitOpenGL failed");
 			return false;
 		}
 

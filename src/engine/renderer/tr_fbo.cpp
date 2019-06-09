@@ -93,7 +93,7 @@ FBO_t          *R_CreateFBO( const char *name, int width, int height )
 
 	if ( width <= 0 || width > glConfig2.maxRenderbufferSize )
 	{
-		Sys::Drop( "R_CreateFBO: bad width %i", width );
+		Sys::Drop( "R_CreateFBO(%s): bad width %i", name, width );
 	}
 
 	if ( height <= 0 || height > glConfig2.maxRenderbufferSize )

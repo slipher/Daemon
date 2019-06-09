@@ -269,7 +269,9 @@ void GL_DrawBuffer( GLenum mode )
 	{
 		glState.drawBuffer = mode;
 
+#ifndef __EMSCRIPTEN__ //XXX
 		glDrawBuffer( mode );
+#endif
 	}
 }
 
@@ -5420,6 +5422,7 @@ const RenderCommand *SetupLightsCommand::ExecuteSelf( ) const
 
 	GLimp_LogComment( "--- SetupLightsCommand::ExecuteSelf ---\n" );
 
+#ifndef __EMSCRIPTEN__ //XXX
 	if( (numLights = refdef.numLights) > 0 ) {
 		shaderLight_t *buffer;
 
@@ -5461,6 +5464,7 @@ const RenderCommand *SetupLightsCommand::ExecuteSelf( ) const
 		}
 		glBindBuffer( bufferTarget, 0 );
 	}
+#endif
 
 	return this + 1;
 }

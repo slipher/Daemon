@@ -97,11 +97,11 @@ set(RENDERERLIST
     ${ENGINE_DIR}/renderer/tr_image_crn.cpp
     ${ENGINE_DIR}/renderer/tr_image_dds.cpp
     ${ENGINE_DIR}/renderer/tr_image_exr.cpp
-    ${ENGINE_DIR}/renderer/tr_image_jpg.cpp
+#    ${ENGINE_DIR}/renderer/tr_image_jpg.cpp
     ${ENGINE_DIR}/renderer/tr_image_ktx.cpp
     ${ENGINE_DIR}/renderer/tr_image_png.cpp
     ${ENGINE_DIR}/renderer/tr_image_tga.cpp
-    ${ENGINE_DIR}/renderer/tr_image_webp.cpp
+#    ${ENGINE_DIR}/renderer/tr_image_webp.cpp
     ${ENGINE_DIR}/renderer/tr_init.cpp
     ${ENGINE_DIR}/renderer/tr_light.cpp
     ${ENGINE_DIR}/renderer/tr_local.h
@@ -319,7 +319,7 @@ set(CLIENTBASELIST
     ${ENGINE_DIR}/botlib/bot_nav_edit.cpp
     ${ENGINE_DIR}/client/cg_api.h
     ${ENGINE_DIR}/client/cg_msgdef.h
-    ${ENGINE_DIR}/client/cin_ogm.cpp
+#    ${ENGINE_DIR}/client/cin_ogm.cpp
     ${ENGINE_DIR}/client/client.h
     ${ENGINE_DIR}/client/cl_avi.cpp
     ${ENGINE_DIR}/client/cl_cgame.cpp
@@ -339,23 +339,24 @@ set(CLIENTBASELIST
 )
 
 set(CLIENTLIST
-    ${ENGINE_DIR}/audio/ALObjects.cpp
-    ${ENGINE_DIR}/audio/ALObjects.h
-    ${ENGINE_DIR}/audio/Audio.cpp
-    ${ENGINE_DIR}/audio/Audio.h
-    ${ENGINE_DIR}/audio/AudioData.h
-    ${ENGINE_DIR}/audio/AudioPrivate.h
-    ${ENGINE_DIR}/audio/Emitter.cpp
-    ${ENGINE_DIR}/audio/Emitter.h
-    ${ENGINE_DIR}/audio/OggCodec.cpp
-    ${ENGINE_DIR}/audio/OpusCodec.cpp
-    ${ENGINE_DIR}/audio/Sample.cpp
-    ${ENGINE_DIR}/audio/Sample.h
-    ${ENGINE_DIR}/audio/Sound.cpp
-    ${ENGINE_DIR}/audio/Sound.h
-    ${ENGINE_DIR}/audio/SoundCodec.cpp
-    ${ENGINE_DIR}/audio/SoundCodec.h
-    ${ENGINE_DIR}/audio/WavCodec.cpp
+${ENGINE_DIR}/null/NullAudio.cpp
+#    ${ENGINE_DIR}/audio/ALObjects.cpp
+#    ${ENGINE_DIR}/audio/ALObjects.h
+#    ${ENGINE_DIR}/audio/Audio.cpp
+#    ${ENGINE_DIR}/audio/Audio.h
+#    ${ENGINE_DIR}/audio/AudioData.h
+#    ${ENGINE_DIR}/audio/AudioPrivate.h
+#    ${ENGINE_DIR}/audio/Emitter.cpp
+#    ${ENGINE_DIR}/audio/Emitter.h
+#    ${ENGINE_DIR}/audio/OggCodec.cpp
+#    ${ENGINE_DIR}/audio/OpusCodec.cpp
+#    ${ENGINE_DIR}/audio/Sample.cpp
+#    ${ENGINE_DIR}/audio/Sample.h
+#    ${ENGINE_DIR}/audio/Sound.cpp
+#    ${ENGINE_DIR}/audio/Sound.h
+#    ${ENGINE_DIR}/audio/SoundCodec.cpp
+#    ${ENGINE_DIR}/audio/SoundCodec.h
+#    ${ENGINE_DIR}/audio/WavCodec.cpp
     ${ENGINE_DIR}/client/cl_keys.cpp
     ${ENGINE_DIR}/client/key_binding.cpp
     ${ENGINE_DIR}/client/key_identification.cpp
