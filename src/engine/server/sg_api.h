@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define SVF_NOCLIENT              0x00000001
 #define SVF_CLIENTMASK            0x00000002
-#define SVF_VISDUMMY              0x00000004
 #define SVF_BOT                   0x00000008
 #define SVF_POW                   0x00000010 // ignored by the engine
 #define SVF_BROADCAST             0x00000020
@@ -38,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SVF_BLANK                 0x00000080 // ignored by the engine
 #define SVF_NOFOOTSTEPS           0x00000100 // ignored by the engine
 #define SVF_CAPSULE               0x00000200
-#define SVF_VISDUMMY_MULTIPLE     0x00000400
 #define SVF_SINGLECLIENT          0x00000800
 #define SVF_NOSERVERINFO          0x00001000 // only meaningful for entities numbered in [0..MAX_CLIENTS)
 #define SVF_NOTSINGLECLIENT       0x00002000
