@@ -160,7 +160,7 @@ struct client_t
 	int            lastMessageNum; // for delta compression
 	int            lastClientCommand; // reliable client message sequence
 	char           lastClientCommandString[ MAX_STRING_CHARS ];
-	sharedEntity_t *gentity; // SV_GentityNum(clientnum)
+	const sharedEntity_t *gentity; // SV_GentityNum(clientnum)
 	char           name[ MAX_NAME_LENGTH ]; // extracted from userinfo, high bits masked
 
 	// downloading
@@ -409,10 +409,12 @@ void SV_SendClientIdle( client_t *client );
 //
 // sv_sgame.c
 //
-sharedEntity_t *SV_GentityNum( int num );
-playerState_t  *SV_GameClientNum( int num );
+const sharedEntity_t *SV_GentityNum( int num );
+sharedEntity_t       *SV_MutableGentityNum( int num );
+const playerState_t  *SV_GameClientNum( int num );
+playerState_t        *SV_MutableGameClientNum( int num );
 
-svEntity_t     *SV_SvEntityForGentity( sharedEntity_t *gEnt );
+svEntity_t    *SV_SvEntityForGentity( const sharedEntity_t *gEnt );
 void           SV_InitGameProgs();
 void           SV_ShutdownGameProgs();
 void           SV_RestartGameProgs();

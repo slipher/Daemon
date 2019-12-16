@@ -116,7 +116,7 @@ bool PointInPolyExtents( Bot_t *bot, dtPolyRef ref, rVec point, rVec extents )
 
 bool PointInPoly( Bot_t *bot, dtPolyRef ref, rVec point )
 {
-	sharedEntity_t *ent = SV_GentityNum( bot->clientNum );
+	const sharedEntity_t *ent = SV_GentityNum( bot->clientNum );
 	return PointInPolyExtents( bot, ref, point, ent->r.maxs );
 }
 

@@ -205,8 +205,9 @@ void SV_DirectConnect( netadr_t from, const Cmd::Args& args )
 		Log::Notice( "Client %i connecting\n", clientNum );
 #endif
 
-	new_client->gentity = SV_GentityNum( clientNum );
-	new_client->gentity->r.svFlags = 0;
+	sharedEntity_t* gentity = SV_MutableGentityNum( clientNum );
+	gentity->r.svFlags = 0;
+	new_client->gentity = gentity;
 
 	// save the address
 	Netchan_Setup( netsrc_t::NS_SERVER, &new_client->netchan, from, qport );
@@ -424,14 +425,13 @@ SV_ClientEnterWorld
 void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd )
 {
 	int            clientNum;
-	sharedEntity_t *ent;
 
 	Log::Debug( "Going from CS_PRIMED to CS_ACTIVE for %s", client->name );
 	client->state = clientState_t::CS_ACTIVE;
 
 	// set up the entity for the client
 	clientNum = client - svs.clients;
-	ent = SV_GentityNum( clientNum );
+	sharedEntity_t* ent = SV_MutableGentityNum( clientNum );
 	ent->s.number = clientNum;
 	client->gentity = ent;
 

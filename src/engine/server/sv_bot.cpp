@@ -55,8 +55,9 @@ int SV_BotAllocateClient()
 	}
 
 	client_t* cl = svs.clients + i;
-	cl->gentity = SV_GentityNum(i);
-	cl->gentity->s.number = i;
+	sharedEntity_t* gentity = SV_MutableGentityNum(i);
+	gentity->s.number = i;
+	cl->gentity = gentity;
 	cl->state = clientState_t::CS_ACTIVE;
 	cl->lastPacketTime = svs.time;
 	cl->netchan.remoteAddress.type = netadrtype_t::NA_BOT;

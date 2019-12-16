@@ -253,12 +253,11 @@ baseline will be transmitted
 */
 void SV_CreateBaseline()
 {
-	sharedEntity_t *svent;
 	int            entnum;
 
 	for ( entnum = 1; entnum < sv.num_entities; entnum++ )
 	{
-		svent = SV_GentityNum( entnum );
+		sharedEntity_t* svent = SV_MutableGentityNum( entnum );
 
 		if ( !svent->r.linked )
 		{
@@ -545,11 +544,10 @@ void SV_SpawnServer(const std::string pakname, const std::string mapname)
 				else
 				{
 					client_t       *client;
-					sharedEntity_t *ent;
 
 					client = &svs.clients[ i ];
 					client->state = clientState_t::CS_ACTIVE;
-					ent = SV_GentityNum( i );
+					sharedEntity_t* ent = SV_MutableGentityNum( i );
 					ent->s.number = i;
 					client->gentity = ent;
 

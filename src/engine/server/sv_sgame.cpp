@@ -49,7 +49,7 @@ Maryland 20850 USA.
 // these functions must be used instead of pointer arithmetic, because
 // the game allocates gentities with private information after the server shared part
 
-sharedEntity_t *SV_GentityNum( int num )
+sharedEntity_t *SV_MutableGentityNum( int num )
 {
 	if ( num < 0 || num >= MAX_GENTITIES || sv.gentities == nullptr )
 	{
@@ -59,7 +59,12 @@ sharedEntity_t *SV_GentityNum( int num )
 	return ( sharedEntity_t * )( ( byte * ) sv.gentities + sv.gentitySize * ( num ) );
 }
 
-playerState_t  *SV_GameClientNum( int num )
+const sharedEntity_t *SV_GentityNum( int num )
+{
+	return SV_MutableGentityNum( num );
+}
+
+playerState_t* SV_MutableGameClientNum( int num )
 {
 	if ( num < 0 || num >= sv_maxclients->integer || sv.gameClients == nullptr )
 	{
@@ -69,7 +74,13 @@ playerState_t  *SV_GameClientNum( int num )
 	return ( playerState_t * )( ( byte * ) sv.gameClients + sv.gameClientSize * ( num ) );
 }
 
-svEntity_t     *SV_SvEntityForGentity( sharedEntity_t *gEnt )
+const playerState_t* SV_GameClientNum( int num )
+{
+	return SV_MutableGameClientNum(num);
+}
+
+
+svEntity_t *SV_SvEntityForGentity( const sharedEntity_t *gEnt )
 {
 	if ( !gEnt || gEnt->s.number < 0 || gEnt->s.number >= MAX_GENTITIES )
 	{
@@ -463,7 +474,7 @@ void GameVM::QVMSyscall(int index, Util::Reader& reader, IPC::Channel& channel)
 
 	case G_ADJUST_AREA_PORTAL_STATE:
 		IPC::HandleMsg<AdjustAreaPortalStateMsg>(channel, std::move(reader), [this](int entityNum, bool open) {
-			sharedEntity_t* ent = SV_GentityNum(entityNum);
+			const sharedEntity_t* ent = SV_GentityNum(entityNum);
 			CM_AdjustAreaPortalState(ent->r.areanum, ent->r.areanum2, open);
 		});
 		break;

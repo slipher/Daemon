@@ -313,7 +313,7 @@ static int QDECL SV_QsortEntityNumbers( const void *a, const void *b )
 SV_AddEntToSnapshot
 ===============
 */
-static void SV_AddEntToSnapshot( sharedEntity_t *clientEnt, svEntity_t *svEnt, sharedEntity_t *gEnt,
+static void SV_AddEntToSnapshot( const sharedEntity_t *clientEnt, svEntity_t *svEnt, const sharedEntity_t *gEnt,
                                  snapshotEntityNumbers_t *eNums )
 {
 	// if we have already added this entity to this snapshot, don't add again
@@ -347,13 +347,12 @@ static void SV_AddEntToSnapshot( sharedEntity_t *clientEnt, svEntity_t *svEnt, s
 SV_AddEntitiesVisibleFromPoint
 ===============
 */
-static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *frame,
+static void SV_AddEntitiesVisibleFromPoint( const vec3_t origin, clientSnapshot_t *frame,
 //                                  snapshotEntityNumbers_t *eNums, bool portal, clientSnapshot_t *oldframe, bool localClient ) {
 //                                  snapshotEntityNumbers_t *eNums, bool portal ) {
     snapshotEntityNumbers_t *eNums /*, bool portal, bool localClient */ )
 {
 	int            e, i;
-	sharedEntity_t *ent, *playerEnt;
 	svEntity_t     *svEnt;
 	int            l;
 	int            clientarea, clientcluster;
@@ -381,7 +380,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 
 //	c_fullsend = 0;
 
-	playerEnt = SV_GentityNum( frame->ps.clientNum );
+	const sharedEntity_t* playerEnt = SV_GentityNum( frame->ps.clientNum );
 
 	if ( playerEnt->r.svFlags & SVF_SELF_PORTAL )
 	{
@@ -390,7 +389,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 
 	for ( e = 0; e < sv.num_entities; e++ )
 	{
-		ent = SV_GentityNum( e );
+		sharedEntity_t* ent = SV_MutableGentityNum( e );
 
 		// never send entities that aren't linked in
 		if ( !ent->r.linked )
@@ -582,12 +581,9 @@ static void SV_BuildClientSnapshot( client_t *client )
 	clientSnapshot_t        *frame;
 	snapshotEntityNumbers_t entityNumbers;
 	int                     i;
-	sharedEntity_t          *ent;
 	entityState_t           *state;
 	svEntity_t              *svEnt;
-	sharedEntity_t          *clent;
 	int                     clientNum;
-	playerState_t           *ps;
 
 	// bump the counter used to prevent double adding
 	sv.snapshotCounter++;
@@ -602,7 +598,7 @@ static void SV_BuildClientSnapshot( client_t *client )
 	// show_bug.cgi?id=62
 	frame->num_entities = 0;
 
-	clent = client->gentity;
+	const sharedEntity_t* clent = client->gentity;
 
 	if ( !clent || client->state == clientState_t::CS_ZOMBIE )
 	{
@@ -610,7 +606,7 @@ static void SV_BuildClientSnapshot( client_t *client )
 	}
 
 	// grab the current playerState_t
-	ps = SV_GameClientNum( client - svs.clients );
+	const playerState_t* ps = SV_GameClientNum( client - svs.clients );
 	frame->ps = *ps;
 
 	// never send client's own entity, because it can
@@ -662,7 +658,7 @@ static void SV_BuildClientSnapshot( client_t *client )
 
 	for ( i = 0; i < entityNumbers.numSnapshotEntities; i++ )
 	{
-		ent = SV_GentityNum( entityNumbers.snapshotEntities[ i ] );
+		const sharedEntity_t* ent = SV_GentityNum( entityNumbers.snapshotEntities[ i ] );
 		state = &svs.snapshotEntities[ svs.nextSnapshotEntities % svs.numSnapshotEntities ];
 		*state = ent->s;
 		svs.nextSnapshotEntities++;
