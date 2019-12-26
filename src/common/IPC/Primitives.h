@@ -222,7 +222,8 @@ namespace Util {
 		}
 		static IPC::FileHandle Read(Reader& stream)
 		{
-			return IPC::FileHandle::FromDesc(stream.ReadHandle());
+			//XXX//return IPC::FileHandle::FromDesc(stream.ReadHandle());
+			for (;;);
 		}
 	};
 	template<> struct SerializeTraits<IPC::SharedMemory> {

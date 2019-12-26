@@ -40,7 +40,7 @@ IPC::Channel VM::rootChannel;
 #ifdef __EMSCRIPTEN__
 #include "engine/framework/VirtualMachine.h"
 void DoSyscall(uint32_t id, Util::Reader reader, IPC::Channel& channel) {
-	VM::activeVM->Syscall(id, std::move(reader), channel);
+	//VM::activeVM->Syscall(id, std::move(reader), channel);
 }
 #else
 
@@ -73,6 +73,7 @@ static void CommonInit(Sys::OSHandle rootSocket)
 		VM::VMHandleSyscall(id, std::move(reader));
 	}
 }
+#endif
 
 void Sys::Error(Str::StringRef message)
 {
@@ -81,7 +82,9 @@ void Sys::Error(Str::StringRef message)
 	if (!errorEntered.test_and_set()) {
 		// Disable checks for sending sync messages when handling async messages.
 		// At this point we don't really care since this is an error.
+#ifndef __EMSCRIPTEN__
 		VM::rootChannel.canSendSyncMsg = true;
+#endif
 
 		// Try to tell the engine about the error, but ignore errors doing so.
 		try {
@@ -121,7 +124,7 @@ extern "C" DLLEXPORT ALIGN_STACK_FOR_MINGW void vmMain(Sys::OSHandle rootSocket)
 	} catch (...) {}
 }
 
-#else
+#elif !defined(__EMSCRIPTEN__)
 
 // Entry point called in a new process
 int main(int argc, char** argv)
@@ -157,5 +160,4 @@ int main(int argc, char** argv)
 	}
 }
 
-#endif
 #endif

@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common/Common.h"
 #include "Primitives.h"
 
+#ifndef __EMSCRIPTEN__
+
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -569,3 +571,5 @@ SharedMemory SharedMemory::Create(size_t size)
 #endif
 
 } // namespace IPC
+
+#endif

@@ -178,7 +178,7 @@ elseif (APPLE)
     else()
         set(DEPS_DIR ${EXTERNAL_DEPS_DIR}/macosx32-${DEPS_VERSION})
     endif()
-elseif (LINUX)
+else()
     set(DEPS_EXT ".tar.bz2")
     # Our minimal NaCl .debs put the files in /usr/lib/nacl, so check that first
     if (EXISTS "/usr/lib/nacl/nacl_loader")
@@ -216,6 +216,8 @@ try_flag(WARNINGS           "-Wno-error=unused-but-set-variable")
 try_flag(WARNINGS           "-Wno-error=unused-function")
 try_flag(WARNINGS           "-Wno-error=unused-parameter")
 try_flag(WARNINGS           "-Wno-error=unused-variable")
+
+set(WARNINGS ${WARNINGS} -Werror=return-type)
 
 ################################################################################
 # Git revision info
@@ -489,11 +491,12 @@ endif()
 
 # zlib
 if (EMSCRIPTEN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s USE_FREETYPE=1 -s USE_SDL=2 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_LIBPNG=1 -s USE_OGG=1 -s USE_VORBIS=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE='clamp' -s TOTAL_MEMORY=268435456")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_ZLIB=1")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s USE_FREETYPE=1 -s USE_SDL=2 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_LIBPNG=1 -s USE_OGG=1 -s USE_VORBIS=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=268435456")
+    # # -s BINARYEN_TRAP_MODE='clamp' # why am i mysterious not allowed to use this now?
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_ZLIB=1")
 elseif (NOT NACL)
     find_package(ZLIB REQUIRED)
-elseif ()
+else()
     add_library(srclibs-zlib EXCLUDE_FROM_ALL ${ZLIBLIST})
     set_target_properties(srclibs-zlib PROPERTIES POSITION_INDEPENDENT_CODE 1 FOLDER "libs")
     set(ZLIB_INCLUDE_DIRS ${LIB_DIR}/zlib)
@@ -747,7 +750,6 @@ if (MONOLITHIC)
     set(GAMELOGIC_DIR ${UNV_DIR}/src)
     include(${UNV_DIR}/src.cmake)
     include_directories(${UNV_DIR}/src)
-    include_directories(${EXTERNAL_DEPS_DIR}/mingw64-4/include) #XXX lua.h
     include(DaemonCBSE)
     CBSE("sgame"
          "${GAMELOGIC_DIR}/sgame/entities.yaml"
@@ -771,11 +773,9 @@ if (MONOLITHIC)
     if (EMSCRIPTEN)
         set(FREETYPE_INCLUDE_DIRS nowhere)
     endif()
-    include(${UNV_DIR}/libRocket.cmake)
-    include_directories(${ROCKET_INCLUDE_DIRS})
+    #include(${UNV_DIR}/libRocket.cmake)
+    #include_directories(${ROCKET_INCLUDE_DIRS})
     set(CMAKE_CURRENT_SOURCE_DIR ${tmp_source_dir})
-
-    add_library(fakelua ${CMAKE_CURRENT_SOURCE_DIR}/fakelua.c)
 endif()
 
 if (BUILD_CLIENT)
@@ -788,10 +788,10 @@ if (BUILD_CLIENT)
     AddApplication(
         Target client
         ExecutableName daemon
-        Definitions ${Definitions} BUILD_SGAME BUILD_CGAME ROCKET_STATIC_LIB
+        Definitions ${Definitions}
         Flags ${WARNINGS}
-        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${CLIENTBASELIST} ${CLIENTLIST} ${CLIENT_GAMELOGIC_LIST}
-        Libs ${LIBS_CLIENT} ${LIBS_CLIENTBASE} ${LIBS_ENGINE} ROCKET_LIB fakelua
+        Files WIN32 ${WIN_RC} ${QCOMMONLIST} ${SERVERLIST} ${CLIENTBASELIST} ${CLIENTLIST}
+        Libs ${LIBS_CLIENT} ${LIBS_CLIENTBASE} ${LIBS_ENGINE}
     )
 
     # generate glsl include files

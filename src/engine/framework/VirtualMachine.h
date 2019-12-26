@@ -147,7 +147,7 @@ public:
 	}
 	template<typename Msg, typename... Args> void SendMsg(Args&&... args)
 	{
-		VM::activeVM = this;
+		//VM::activeVM = this;
 		Util::Writer writer;
 		writer.WriteArgs(Util::TypeListFromTuple<typename Msg::Inputs>(), std::forward<Args>(args)...);
 		Util::Reader reply = GameHandleSyscall(Msg::id, std::move(writer));

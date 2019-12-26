@@ -5,17 +5,17 @@ set(SHAREDLIST
     ${MOUNT_DIR}/shared/CommonProxies.h
     ${MOUNT_DIR}/shared/VMMain.cpp
     ${MOUNT_DIR}/shared/VMMain.h
-#XXX    PARENT_SCOPE
+    PARENT_SCOPE
 )
 
 set(SHAREDLIST_cgame
     ${MOUNT_DIR}/shared/client/cg_api.cpp ${MOUNT_DIR}/shared/client/cg_api.h
-#XXX    PARENT_SCOPE
+    PARENT_SCOPE
 )
 
 set(SHAREDLIST_sgame
     ${MOUNT_DIR}/shared/server/sg_api.cpp ${MOUNT_DIR}/shared/server/sg_api.h
-#XXX    PARENT_SCOPE
+    PARENT_SCOPE
 )
 
 set(COMMONLIST
@@ -39,7 +39,7 @@ set(COMMONLIST
     ${COMMON_DIR}/IPC/CommandBuffer.h
     ${COMMON_DIR}/IPC/Common.h
     ${COMMON_DIR}/IPC/CommonSyscalls.h
-#XXX    ${COMMON_DIR}/IPC/Primitives.cpp
+    ${COMMON_DIR}/IPC/Primitives.cpp
     ${COMMON_DIR}/IPC/Primitives.h
     ${COMMON_DIR}/KeyIdentification.cpp
     ${COMMON_DIR}/KeyIdentification.h
@@ -97,11 +97,11 @@ set(RENDERERLIST
     ${ENGINE_DIR}/renderer/tr_image_crn.cpp
     ${ENGINE_DIR}/renderer/tr_image_dds.cpp
     ${ENGINE_DIR}/renderer/tr_image_exr.cpp
-#    ${ENGINE_DIR}/renderer/tr_image_jpg.cpp
+    ${ENGINE_DIR}/renderer/tr_image_jpg.cpp
     ${ENGINE_DIR}/renderer/tr_image_ktx.cpp
     ${ENGINE_DIR}/renderer/tr_image_png.cpp
     ${ENGINE_DIR}/renderer/tr_image_tga.cpp
-#    ${ENGINE_DIR}/renderer/tr_image_webp.cpp
+    ${ENGINE_DIR}/renderer/tr_image_webp.cpp
     ${ENGINE_DIR}/renderer/tr_init.cpp
     ${ENGINE_DIR}/renderer/tr_light.cpp
     ${ENGINE_DIR}/renderer/tr_local.h
@@ -264,7 +264,7 @@ set(ENGINELIST
     ${ENGINE_DIR}/framework/System.h
     ${ENGINE_DIR}/framework/VirtualMachine.cpp
     ${ENGINE_DIR}/framework/VirtualMachine.h
-#XXX    ${ENGINE_DIR}/framework/Crypto.cpp
+    ${ENGINE_DIR}/framework/Crypto.cpp
     ${ENGINE_DIR}/framework/Crypto.h
     ${ENGINE_DIR}/framework/Rcon.cpp
     ${ENGINE_DIR}/framework/Rcon.h
@@ -289,7 +289,7 @@ endif()
 set(QCOMMONLIST
     ${ENGINE_DIR}/qcommon/cmd.cpp
     ${ENGINE_DIR}/qcommon/common.cpp
-#XXX    ${ENGINE_DIR}/qcommon/crypto.cpp
+    ${ENGINE_DIR}/qcommon/crypto.cpp
     ${ENGINE_DIR}/qcommon/crypto.h
     ${ENGINE_DIR}/qcommon/cvar.cpp
     ${ENGINE_DIR}/qcommon/cvar.h
@@ -299,7 +299,7 @@ set(QCOMMONLIST
     ${ENGINE_DIR}/qcommon/net_chan.cpp
     ${ENGINE_DIR}/qcommon/net_ip.cpp
     ${ENGINE_DIR}/qcommon/net_types.h
-#XXX    ${ENGINE_DIR}/qcommon/parse.cpp
+    ${ENGINE_DIR}/qcommon/parse.cpp
     ${ENGINE_DIR}/qcommon/print_translated.h
     ${ENGINE_DIR}/qcommon/qcommon.h
     ${ENGINE_DIR}/qcommon/qfiles.h
@@ -319,7 +319,7 @@ set(CLIENTBASELIST
     ${ENGINE_DIR}/botlib/bot_nav_edit.cpp
     ${ENGINE_DIR}/client/cg_api.h
     ${ENGINE_DIR}/client/cg_msgdef.h
-#    ${ENGINE_DIR}/client/cin_ogm.cpp
+    ${ENGINE_DIR}/client/cin_ogm.cpp
     ${ENGINE_DIR}/client/client.h
     ${ENGINE_DIR}/client/cl_avi.cpp
     ${ENGINE_DIR}/client/cl_cgame.cpp
@@ -340,23 +340,23 @@ set(CLIENTBASELIST
 
 set(CLIENTLIST
 ${ENGINE_DIR}/null/NullAudio.cpp
-#    ${ENGINE_DIR}/audio/ALObjects.cpp
-#    ${ENGINE_DIR}/audio/ALObjects.h
-#    ${ENGINE_DIR}/audio/Audio.cpp
-#    ${ENGINE_DIR}/audio/Audio.h
-#    ${ENGINE_DIR}/audio/AudioData.h
-#    ${ENGINE_DIR}/audio/AudioPrivate.h
-#    ${ENGINE_DIR}/audio/Emitter.cpp
-#    ${ENGINE_DIR}/audio/Emitter.h
-#    ${ENGINE_DIR}/audio/OggCodec.cpp
-#    ${ENGINE_DIR}/audio/OpusCodec.cpp
-#    ${ENGINE_DIR}/audio/Sample.cpp
-#    ${ENGINE_DIR}/audio/Sample.h
-#    ${ENGINE_DIR}/audio/Sound.cpp
-#    ${ENGINE_DIR}/audio/Sound.h
-#    ${ENGINE_DIR}/audio/SoundCodec.cpp
-#    ${ENGINE_DIR}/audio/SoundCodec.h
-#    ${ENGINE_DIR}/audio/WavCodec.cpp
+    ${ENGINE_DIR}/audio/ALObjects.cpp
+    ${ENGINE_DIR}/audio/ALObjects.h
+    ${ENGINE_DIR}/audio/Audio.cpp
+    ${ENGINE_DIR}/audio/Audio.h
+    ${ENGINE_DIR}/audio/AudioData.h
+    ${ENGINE_DIR}/audio/AudioPrivate.h
+    ${ENGINE_DIR}/audio/Emitter.cpp
+    ${ENGINE_DIR}/audio/Emitter.h
+    ${ENGINE_DIR}/audio/OggCodec.cpp
+    ${ENGINE_DIR}/audio/OpusCodec.cpp
+    ${ENGINE_DIR}/audio/Sample.cpp
+    ${ENGINE_DIR}/audio/Sample.h
+    ${ENGINE_DIR}/audio/Sound.cpp
+    ${ENGINE_DIR}/audio/Sound.h
+    ${ENGINE_DIR}/audio/SoundCodec.cpp
+    ${ENGINE_DIR}/audio/SoundCodec.h
+    ${ENGINE_DIR}/audio/WavCodec.cpp
     ${ENGINE_DIR}/client/cl_keys.cpp
     ${ENGINE_DIR}/client/key_binding.cpp
     ${ENGINE_DIR}/client/key_identification.cpp

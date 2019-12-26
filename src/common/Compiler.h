@@ -72,7 +72,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Raise an exception and break in the debugger
 #if defined(__i386__) || defined(__x86_64__)
 #define BREAKPOINT() __asm__ __volatile__("int $3\n\t")
-#elif defined(__pnacl__)
+#elif defined(__pnacl__) || defined(__EMSCRIPTEN__)
 // TODO find how to implement breakpoint on PNaCl
 #define BREAKPOINT()
 #else

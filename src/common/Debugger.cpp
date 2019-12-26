@@ -114,7 +114,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         }
     }
 
-#elif defined(__native_client__)
+#elif defined(__native_client__) || defined(__EMSCRIPTEN__)
 
     // For now, assume there is no debugger attached for NaCl VMs at very few developers use that.
     // TODO: when starting the VM in VMMain get data from the engine saying if we are in debug mode or not.

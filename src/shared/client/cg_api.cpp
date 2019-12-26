@@ -219,9 +219,6 @@ void trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[ 3 ], 
 
 sfxHandle_t trap_S_RegisterSound( const char *sample, bool)
 {
-	bool SgameActive();
-	if (SgameActive())
-		return 0;
 	int sfx;
 	VM::SendMsg<Audio::RegisterSoundMsg>(sample, sfx);
 	return sfx;
@@ -298,9 +295,6 @@ void trap_R_LoadWorldMap( const char *mapname )
 
 qhandle_t trap_R_RegisterModel( const char *name )
 {
-	bool SgameActive();
-	if (SgameActive())
-		return 0;
 	int handle;
 	VM::SendMsg<Render::RegisterModelMsg>(name, handle);
 	return handle;
@@ -315,9 +309,6 @@ qhandle_t trap_R_RegisterSkin( const char *name )
 
 qhandle_t trap_R_RegisterShader( const char *name, RegisterShaderFlags_t flags )
 {
-	bool SgameActive();
-	if (SgameActive())
-		return 0;
 	int handle;
 	VM::SendMsg<Render::RegisterShaderMsg>(name, flags, handle);
 	return handle;
