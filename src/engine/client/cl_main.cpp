@@ -140,10 +140,8 @@ cvar_t	*cl_logs;
 
 cvar_t             *p_team; /*<team id without team semantics (to not break the relationship between client and cgame)*/
 
-#ifndef __EMSCRIPTEN__
 struct rsa_public_key  public_key;
 struct rsa_private_key private_key;
-#endif
 
 cvar_t             *cl_gamename;
 
@@ -1143,7 +1141,6 @@ static Cvar::Range<Cvar::Cvar<int>> cvar_rcon_client_secure(
  */
 static void CL_RconDeliver(const Rcon::Message &message)
 {
-#ifndef __EMSCRIPTEN__
     if ( message.secure == Rcon::Secure::Unencrypted )
     {
         Net::OutOfBandPrint(netsrc_t::NS_CLIENT, message.remote, "rcon %s %s", message.password, message.command);
@@ -1168,7 +1165,6 @@ static void CL_RconDeliver(const Rcon::Message &message)
             Crypto::ToString(Crypto::Encoding::Base64Encode(cypher))
         );
     }
-#endif
 }
 
 static void CL_RconSend(const Rcon::Message &message)
@@ -1358,8 +1354,6 @@ static void CL_ServerRconInfoPacket( netadr_t, msg_t *msg )
 	}
 }
 
-#ifndef __EMSCRIPTEN__
-
 static void CL_GetRSAKeysFileName( char *buffer, size_t size )
 {
 	Q_snprintf( buffer, size, "%s", RSAKEY_FILE );
@@ -1458,8 +1452,6 @@ static void CL_ClearRSAKeys()
 	rsa_private_key_clear( &private_key );
 	rsa_public_key_clear( &public_key );
 }
-
-#endif
 
 
 /*
@@ -1702,9 +1694,7 @@ void CL_CheckForResend()
 		{
 			char key[ RSA_STRING_LENGTH ];
 
-#ifndef __EMSCRIPTEN__
 			mpz_get_str( key, 16, public_key.n);
-#endif
 			// sending back the challenge
 			port = Cvar_VariableValue( "net_qport" );
 
@@ -2847,9 +2837,7 @@ void CL_Init()
 
 	CL_InitInput();
 
-#ifndef __EMSCRIPTEN__
 	CL_LoadRSAKeys();
-#endif
 
 	//
 	// register our variables
@@ -3046,9 +3034,7 @@ void CL_Shutdown()
 	CL_ClearKeyBinding();
 	CL_ClearInput();
 
-#ifndef __EMSCRIPTEN__
 	CL_ClearRSAKeys();
-#endif
 
 	// done.
 

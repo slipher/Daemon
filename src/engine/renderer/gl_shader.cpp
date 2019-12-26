@@ -1074,7 +1074,7 @@ GLuint GLShaderManager::CompileShader( Str::StringRef programName,
 	{
 		PrintShaderSource( programName, shader );
 		PrintInfoLog( shader );
-		//XXX ThrowShaderError(Str::Format("Couldn't compile %s shader: %s", ( shaderType == GL_VERTEX_SHADER) ? "vertex" : "fragment", programName));
+		ThrowShaderError(Str::Format("Couldn't compile %s shader: %s", ( shaderType == GL_VERTEX_SHADER) ? "vertex" : "fragment", programName));
 	}
 
 	return shader;
@@ -1184,7 +1184,7 @@ void GLShaderManager::LinkProgram( GLuint program ) const
 	if ( !linked )
 	{
 		PrintInfoLog( program );
-		//XXX  ThrowShaderError( "Shaders failed to link!" );
+		ThrowShaderError( "Shaders failed to link!" );
 	}
 }
 

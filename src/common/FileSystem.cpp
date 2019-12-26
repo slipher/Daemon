@@ -1081,13 +1081,8 @@ static void ParseDeps(const PakInfo& parent, Str::StringRef depsData, std::error
 			const PakInfo* pak = FindPak(name);
 			if (!pak) {
 				fsLogs.Warn("Could not find pak '%s' required by '%s'", name, parent.path);
-#ifdef __EMSCRIPTEN__
-				lineStart = lineEnd == depsData.end() ? lineEnd : lineEnd + 1;
-				continue;
-#else
 				SetErrorCodeFilesystem(err, filesystem_error::missing_dependency);
 				return;
-#endif
 			}
 			LoadPak(*pak, err);
 			if (err)

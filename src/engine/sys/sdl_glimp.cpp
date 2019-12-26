@@ -682,7 +682,6 @@ static rserr_t GLimp_SetMode( int mode, bool fullscreen, bool noborder )
 				minor = 1;
 			}
 
-#ifndef __EMSCRIPTEN__
 			SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, major );
 			SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, minor );
 
@@ -699,7 +698,6 @@ static rserr_t GLimp_SetMode( int mode, bool fullscreen, bool noborder )
 			{
 				SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
 			}
-#endif
 			window = SDL_CreateWindow( CLIENT_WINDOW_TITLE, x, y, glConfig.vidWidth, glConfig.vidHeight, flags );
 
 			if ( !window )
@@ -754,13 +752,11 @@ static rserr_t GLimp_SetMode( int mode, bool fullscreen, bool noborder )
 	}
 
 	sscanf( ( const char * ) glGetString( GL_VERSION ), "%d.%d", &GLmajor, &GLminor );
-#ifndef __EMSCRIPTEN__
 	if ( GLmajor < 2 || ( GLmajor == 2 && GLminor < 1 ) )
 	{
 		// missing shader support, there is no 1.x renderer anymore
 		return rserr_t::RSERR_OLD_GL;
 	}
-#endif
 
 	if ( GLmajor < 3 || ( GLmajor == 3 && GLminor < 2 ) )
 	{
@@ -1029,13 +1025,11 @@ static void GLimp_InitExtensions()
 {
 	logger.Notice("Initializing OpenGL extensions" );
 
-#ifndef __EMSCRIPTEN__
 	if ( LOAD_EXTENSION_WITH_CVAR(ARB_debug_output, r_glDebugProfile) )
 	{
 		glDebugMessageCallbackARB( (GLDEBUGPROCARB)GLimp_DebugCallback, nullptr );
 		glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB );
 	}
-#endif
 
 	// Shader limits
 	glGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig2.maxVertexUniforms );

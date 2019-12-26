@@ -1881,9 +1881,6 @@ NET_Config
 */
 void NET_Config( bool enableNetworking )
 {
-#ifdef __EMSCRIPTEN__
-	return;
-#endif
 	bool modified;
 	bool stop;
 	bool start;

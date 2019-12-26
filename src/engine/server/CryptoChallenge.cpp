@@ -73,13 +73,9 @@ std::size_t Challenge::Bytes()
 
 std::string Challenge::GenerateString()
 {
-#ifdef __EMSCRIPTEN__
-	return "a";
-#else
 	Crypto::Data data( Bytes() );
 	Sys::GenRandomBytes(data.data(), data.size());
 	return Crypto::ToString(Crypto::Encoding::HexEncode(data));
-#endif
 }
 
 bool Challenge::ValidString(const std::string& challenge)
@@ -167,12 +163,10 @@ bool ChallengeManager::MatchString( const netadr_t& source,
 									Challenge::Duration* ping )
 {
 	auto challenge_data = Crypto::FromString(challenge);
-#ifndef __EMSCRIPTEN__
 	if ( Crypto::Encoding::HexDecode(challenge_data, challenge_data) )
 	{
 		return Match({source, challenge_data}, ping);
 	}
-#endif
 
 	return false;
 }

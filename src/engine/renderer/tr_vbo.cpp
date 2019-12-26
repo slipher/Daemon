@@ -603,12 +603,10 @@ VBO_t *R_CreateStaticVBO( const char *name, vboData_t data, vboLayout_t layout )
 	} else
 #endif
 	{
-#ifndef __EMSCRIPTEN__
 		glBufferData( GL_ARRAY_BUFFER, vbo->vertexesSize, nullptr, vbo->usage );
 		outData = (byte *)glMapBuffer( GL_ARRAY_BUFFER, GL_WRITE_ONLY );
 		R_CopyVertexData( vbo, outData, data );
 		glUnmapBuffer( GL_ARRAY_BUFFER );
-#endif
 	}
 
 	R_BindNullVBO();
@@ -1124,9 +1122,6 @@ Map the default VBOs
 ==============
 */
 void Tess_MapVBOs( bool forceCPU ) {
-#ifdef __EMSCRIPTEN__
-	forceCPU = true;
-#endif
 	if( forceCPU || !glConfig2.mapBufferRangeAvailable ) {
 		// use host buffers
 		tess.verts = tess.vertsBuffer;
@@ -1134,7 +1129,6 @@ void Tess_MapVBOs( bool forceCPU ) {
 
 		return;
 	}
-#ifndef __EMSCRIPTEN__
 
 	if( tess.verts == nullptr ) {
 		R_BindVBO( tess.vbo );
@@ -1189,7 +1183,6 @@ void Tess_MapVBOs( bool forceCPU ) {
 				GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_FLUSH_EXPLICIT_BIT );
 		}
 	}
-#endif
 }
 
 /*

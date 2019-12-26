@@ -853,9 +853,6 @@ static bool RconAcceptable(const Rcon::Message& msg, std::string *invalid_reason
  */
 static Rcon::Message RconDecode(const netadr_t& remote, const Cmd::Args& args)
 {
-#ifdef __EMSCRIPTEN__
-    return Rcon::Message("");
-#else
     if ( args.size() < 3 || (args[0] != "rcon" && args[0] != "srcon") )
     {
         return Rcon::Message("Invalid command");
@@ -915,7 +912,6 @@ static Rcon::Message RconDecode(const netadr_t& remote, const Cmd::Args& args)
         return Rcon::Message(remote, command, Rcon::Secure::Invalid,
             cvar_rcon_server_password.Get());
     }
-#endif
 }
 
 static int RemoteCommandThrottle()

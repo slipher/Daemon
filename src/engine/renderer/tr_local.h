@@ -30,49 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tr_public.h"
 #include "iqm.h"
 
-#ifdef __EMSCRIPTEN__
-#ifdef USE_REGAL
-#include <GL/Regal.h>
-#define GLEW_ARB_texture_gather 0
-#define GLEW_ARB_uniform_buffer_object 0
-#define GLEW_EXT_gpu_shader4 0
-#define GLEW_ARB_gpu_shader5 0
-#define GLEW_EXT_texture_compression_dxt1 0
-#define GLEW_EXT_texture_compression_s3tc 0
-#define GLEW_ARB_debug_output 0
-#define GLEW_ARB_map_buffer_range 0
-#define GLEW_ARB_get_program_binary 0
-#define GLEW_ARB_framebuffer_object 0
-#define GLEW_ARB_texture_rg 0
-#define GLEW_EXT_texture_integer 0
-#define GLEW_ARB_texture_float 0
-#define GLEW_ARB_half_float_pixel 0
-#define GLEW_OK 0
-#define GLEW_ARB_texture_compression_rgtc 0
-#define GLEW_EXT_texture_filter_anisotropic 0
-#define GLEW_ARB_half_float_vertex 0
-#define GLEW_ARB_buffer_storage 0
-#define GLEW_ARB_sync 0
-#define glewGetString(...) "9.9.9"
-#define glewGetErrorString(...) "glew error string"
-inline int glewInit() { return GLEW_OK; }
-#else
-// to avoid the one in external_deps
-#include  <../../system/include/GL/glew.h>
-#define glDrawBuffer(...) //XXX
-#define glFramebufferTexture3D(...) //XXX
-#define glGetCompressedTexImage(...) //XXX
-#define glGetQueryObjectiv(...) //XXX
-#define glGetTexImage(...) //XXX
-#define glGetTexLevelParameteriv(...) //XXX
-#define glMultiDrawElements(...) //XXX
-#define glPointSize(...) //XXX
-#define glPolygonMode(...) //XXX
-#define glDebugMessageInsertARB(...)
-#endif
-#else
 #include <GL/glew.h>
-#endif
 
 #define DYN_BUFFER_SIZE ( 4 * 1024 * 1024 )
 #define DYN_BUFFER_SEGMENTS 4

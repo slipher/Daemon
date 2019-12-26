@@ -61,11 +61,7 @@ public:
     }
 
     explicit Challenge( const netadr_t& source )
-#ifdef __EMSCRIPTEN__
-        : Challenge( source, {} )
-#else
         : Challenge( source, Crypto::RandomData( Bytes() ) )
-#endif
     {
     }
 
@@ -101,11 +97,7 @@ public:
      */
     std::string String() const
     {
-#ifdef __EMSCRIPTEN__
-        return "";
-#else
         return Crypto::ToString( Crypto::Encoding::HexEncode( challenge ) );
-#endif
     }
 
     /*
