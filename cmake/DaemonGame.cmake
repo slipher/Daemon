@@ -37,16 +37,15 @@ function(GAMEMODULE)
     set(multiValueArgs DEFINITIONS FLAGS FILES LIBS)
     cmake_parse_arguments(GAMEMODULE "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
     if (EMSCRIPTEN)
-        message("wawawawawawa")
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/..)
-        add_executable(${GAMEMODULE_NAME}.wasm ${PCH_FILE} ${GAMEMODULE_FILES} ${SHAREDLIST_${GAMEMODULE_NAME}} ${SHAREDLIST} ${COMMONLIST})
-        target_link_libraries(${GAMEMODULE_NAME}.wasm ${GAMEMODULE_LIBS} ${LIBS_BASE})
-        set_target_properties(${GAMEMODULE_NAME}.wasm PROPERTIES
+        add_executable(${GAMEMODULE_NAME}-wasm ${PCH_FILE} ${GAMEMODULE_FILES} ${SHAREDLIST_${GAMEMODULE_NAME}} ${SHAREDLIST} ${COMMONLIST})
+        target_link_libraries(${GAMEMODULE_NAME}-wasm ${GAMEMODULE_LIBS} ${LIBS_BASE})
+        set_target_properties(${GAMEMODULE_NAME}-wasm PROPERTIES
             COMPILE_DEFINITIONS "VM_NAME=${GAMEMODULE_NAME};${GAMEMODULE_DEFINITIONS};BUILD_VM"
             COMPILE_OPTIONS "${GAMEMODULE_FLAGS}"
             FOLDER ${GAMEMODULE_NAME}
+            SUFFIX ".wasm"
         )
-        ADD_PRECOMPILED_HEADER(${GAMEMODULE_NAME}.wasm)
+        # TODO: Try precompiled header
     elseif (NOT NACL)
         if (BUILD_GAME_NATIVE_DLL)
             add_library(${GAMEMODULE_NAME}-native-dll MODULE ${PCH_FILE} ${GAMEMODULE_FILES} ${SHAREDLIST_${GAMEMODULE_NAME}} ${SHAREDLIST} ${COMMONLIST})

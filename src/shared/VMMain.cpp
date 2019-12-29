@@ -161,3 +161,35 @@ int main(int argc, char** argv)
 }
 
 #endif
+
+
+#ifdef __EMSCRIPTEN__
+
+#include<emscripten.h>
+#include<setjmp.h>
+extern "C" {
+	EMSCRIPTEN_KEEPALIVE
+		int add(int x, int y) {
+		return x + y;
+	}
+
+	char* getenv(const char*) { return nullptr; }
+
+	int setjmp(jmp_buf)
+	{
+		return 0;
+	}
+	void longjmp(jmp_buf, int) {
+		// longjmp is referenced by FreeType
+		Sys::Error("longjmp called (invalid font?)");
+	}
+	int _setjmp(jmp_buf)
+	{
+		return 0;
+	}
+	void _longjmp(jmp_buf, int) {
+		// longjmp is referenced by FreeType
+		Sys::Error("longjmp called (invalid font?)");
+	}
+}
+#endif

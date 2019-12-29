@@ -320,6 +320,45 @@ std::pair<Sys::OSHandle, IPC::Socket> CreateNaClVM(std::pair<IPC::Socket, IPC::S
 	return InternalLoadModule(std::move(pair), args.data(), true, std::move(stderrRedirect));
 }
 
+std::pair<Sys::OSHandle, IPC::Socket> CreateWasmVM(std::pair<IPC::Socket, IPC::Socket> pair, Str::StringRef name, int debugLoader) {
+	const std::string& libPath = FS::GetLibPath();
+	std::vector<const char*> args;
+	char rootSocketRedir[32];
+	std::string module, modulePath;
+	FS::File stderrRedirect;
+
+
+	// Extract the nexe from the pak so that nacl_loader can load it
+	module = name + "-wasm.wasm";
+	modulePath = FS::Path::Build(libPath, module);
+	modulePath = "C:/unv/unvanquished/build/wasm/cgame-wasm.wasm";
+
+	// Generate command line
+	Q_snprintf(rootSocketRedir, sizeof(rootSocketRedir), "%d", (uintptr_t)pair.second.GetHandle());
+	if (!FS::RawPath::FileExists(modulePath))
+		Sys::Drop("VM module file not found: %s", modulePath);
+
+	args.push_back("C:/unv/unvanquished/daemon/src/engine/sandbox/target/debug/sandbox.exe");
+	args.push_back(modulePath.c_str());
+	args.push_back(rootSocketRedir);
+	args.push_back(nullptr);
+
+	Log::Notice("Loading VM module %s...", module);
+
+	if (debugLoader) {
+		std::string commandLine;
+		for (auto arg : args) {
+			if (arg) {
+				commandLine += " ";
+				commandLine += arg;
+			}
+		}
+		Log::Notice("Using loader args: %s", commandLine.c_str());
+	}
+
+	return InternalLoadModule(std::move(pair), args.data(), true, std::move(stderrRedirect));
+}
+
 std::pair<Sys::OSHandle, IPC::Socket> CreateNativeVM(std::pair<IPC::Socket, IPC::Socket> pair, Str::StringRef name, bool debug) {
 	const std::string& libPath = FS::GetLibPath();
 	std::vector<const char*> args;

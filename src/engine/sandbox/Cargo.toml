@@ -1,0 +1,12 @@
+[package]
+name = "nthtnhtnhheo"
+version = "9.9.9"
+[workspace]
+
+[dependencies]
+wasmer-runtime = "0.12.0"
+winapi = "0.3.8"
+
+[[bin]]
+name = "sandbox"
+path = "sandbox.rs"

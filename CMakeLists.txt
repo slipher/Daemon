@@ -217,7 +217,9 @@ try_flag(WARNINGS           "-Wno-error=unused-function")
 try_flag(WARNINGS           "-Wno-error=unused-parameter")
 try_flag(WARNINGS           "-Wno-error=unused-variable")
 
-set(WARNINGS ${WARNINGS} -Werror=return-type)
+if(EMSCRIPTEN)
+    set(WARNINGS ${WARNINGS} -Werror=return-type)
+endif()
 
 ################################################################################
 # Git revision info

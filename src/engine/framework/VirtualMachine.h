@@ -92,6 +92,10 @@ enum vmType_t {
 	// Loads the VM as a native DLL from the libpath
 	// USE THIS FOR DEVELOPMENT
 	TYPE_NATIVE_DLL,
+
+	// Experimental WASM VM
+	TYPE_WASM,
+
 	TYPE_END
 };
 
