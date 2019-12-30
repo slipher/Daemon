@@ -339,7 +339,6 @@ set(CLIENTBASELIST
 )
 
 set(CLIENTLIST
-${ENGINE_DIR}/null/NullAudio.cpp
     ${ENGINE_DIR}/audio/ALObjects.cpp
     ${ENGINE_DIR}/audio/ALObjects.h
     ${ENGINE_DIR}/audio/Audio.cpp

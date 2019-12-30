@@ -335,7 +335,6 @@ void SV_InitGameProgs()
 }
 
 GameVM::GameVM(): VM::VMBase("sgame", Cvar::NONE), services(nullptr) {
-	vmhandlesyscall = VM::VMHandleSyscall;
 }
 
 void GameVM::Start()

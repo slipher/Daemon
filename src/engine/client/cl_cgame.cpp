@@ -997,10 +997,8 @@ void  CL_OnTeamChanged( int newTeam )
 	Cmd::BufferCommandText( "exec -f " TEAMCONFIG_NAME );
 }
 
-namespace VM { void cg_VMHandleSyscall(uint32_t, Util::Reader); }
 CGameVM::CGameVM(): VM::VMBase("cgame", Cvar::CHEAT), services(nullptr), cmdBuffer("client")
 {
-	vmhandlesyscall = VM::cg_VMHandleSyscall;
 }
 
 void CGameVM::Start()

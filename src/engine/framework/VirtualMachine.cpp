@@ -32,14 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "qcommon/sys.h"
 #include "VirtualMachine.h"
 
-#ifdef __EMSCRIPTEN__
-
-uint32_t VM::VMBase::Create() { return 3; }
-void VM::VMBase::Free() {}
-VM::VMBase* VM::activeVM;
-
-#else
-
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -323,7 +315,6 @@ std::pair<Sys::OSHandle, IPC::Socket> CreateNaClVM(std::pair<IPC::Socket, IPC::S
 std::pair<Sys::OSHandle, IPC::Socket> CreateWasmVM(std::pair<IPC::Socket, IPC::Socket> pair, Str::StringRef name, int debugLoader) {
 	const std::string& libPath = FS::GetLibPath();
 	std::vector<const char*> args;
-	char rootSocketRedir[32];
 	std::string module, modulePath;
 	FS::File stderrRedirect;
 
@@ -334,13 +325,13 @@ std::pair<Sys::OSHandle, IPC::Socket> CreateWasmVM(std::pair<IPC::Socket, IPC::S
 	modulePath = "C:/unv/unvanquished/build/wasm/cgame-wasm.wasm";
 
 	// Generate command line
-	Q_snprintf(rootSocketRedir, sizeof(rootSocketRedir), "%d", (uintptr_t)pair.second.GetHandle());
+	std::string socketHandle = std::to_string(uintptr_t(pair.second.GetHandle()));
 	if (!FS::RawPath::FileExists(modulePath))
 		Sys::Drop("VM module file not found: %s", modulePath);
 
 	args.push_back("C:/unv/unvanquished/daemon/src/engine/sandbox/target/debug/sandbox.exe");
 	args.push_back(modulePath.c_str());
-	args.push_back(rootSocketRedir);
+	args.push_back(socketHandle.c_str());
 	args.push_back(nullptr);
 
 	Log::Notice("Loading VM module %s...", module);
@@ -442,6 +433,8 @@ uint32_t VMBase::Create()
 		std::tie(processHandle, rootSocket) = CreateNaClVM(std::move(pair), name, params.debug.Get(), type == TYPE_NACL, params.debugLoader.Get());
 	} else if (type == TYPE_NATIVE_EXE) {
 		std::tie(processHandle, rootSocket) = CreateNativeVM(std::move(pair), name, params.debug.Get());
+	} else if (type == TYPE_WASM) {
+		std::tie(processHandle, rootSocket) = CreateWasmVM(std::move(pair), name, true);
 	} else {
 		rootSocket = CreateInProcessNativeVM(std::move(pair), name, inProcess);
 	}
@@ -546,5 +539,3 @@ void VMBase::Free()
 }
 
 } // namespace VM
-
-#endif

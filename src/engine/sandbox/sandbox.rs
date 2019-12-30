@@ -5,6 +5,7 @@ use wasmer_runtime::Value;
 use wasmer_runtime::imports;
 use wasmer_runtime::func;
 use winapi::um::fileapi::ReadFile;
+use winapi::um::fileapi::WriteFile;
 use winapi::um::winnt::HANDLE;
 use winapi::shared::minwindef::LPVOID;
 
@@ -66,19 +67,56 @@ fn w_fd_read(_0: i32, _1: i32, _2: i32, _3: i32) -> i32 {
     // panic!("fd_write");
 // }
 
+struct ControlHeader {
+  command: i32,
+  pid: u32,
+  message_length: u32,
+  handle_count: u32,
+}
+
+struct InternalHeader {
+    xfer_protocol_version: u32,
+    descriptor_data_bytes: u32,
+    pad0: u32,
+    pad1: u32,
+}
 
 fn tryread(handle_str: &String) {
     let handle_int : usize = handle_str.parse().unwrap();
     let handle = handle_int as HANDLE;
-    let mut bytes_read: u32 = 0;
+    let mut bytes: u32 = 0;
     let mut buf = [0u8; 999];
+    let mut wbuf : [u8;5] = [0,4,5,6,7];
+    let mut header = ControlHeader {
+        command: 2, // kMessage
+        pid: 0,
+        message_length: 16 + 5,
+        handle_count: 0,
+    };
+    let mut header2 = InternalHeader {
+        xfer_protocol_version: 0xd3c0de01,
+        descriptor_data_bytes: 0,
+        pad0: 123,
+        pad1: 456,
+    };
+  for _ in 0..1 {
     if 0 == unsafe{
-        ReadFile(handle, &mut buf[0] as *mut u8 as LPVOID, 999, &mut bytes_read, std::ptr::null_mut()
+        WriteFile(handle, &mut header as *mut ControlHeader as LPVOID, 4*4, &mut bytes, std::ptr::null_mut());
+        WriteFile(handle, &mut header2 as *mut InternalHeader as LPVOID, 16, &mut bytes, std::ptr::null_mut());
+        WriteFile(handle, &mut wbuf[0] as *mut u8 as LPVOID, 5, &mut bytes, std::ptr::null_mut())
+    } {
+        println!("failde to writed file");
+        return;
+    }
+  }
+    println!("{} bytes written", bytes);
+    if 0 == unsafe{
+        ReadFile(handle, &mut buf[0] as *mut u8 as LPVOID, 999, &mut bytes, std::ptr::null_mut())
     } {
         println!("failde to readed file");
         return;
     }
-    println!("{} bytes read", bytes_read);
+    println!("{} bytes read", bytes);
 }
 
 fn main() {
@@ -86,8 +124,9 @@ fn main() {
     if args.len() < 2 {
         std::process::exit(1);
     }
+    println!("jjjjjjjjjjjjjj");
     if args.len() > 2 {
-        tryread(args[2]);
+        tryread(&args[2]);
     }
     let binary: Vec<u8> = std::fs::read(&args[1]).unwrap();
     let mut import_object = imports! {
