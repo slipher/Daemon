@@ -1,6 +1,8 @@
 extern crate wasmer_runtime;
 extern crate winapi;
 
+use std::fs::File;
+use std::mem::MaybeUninit;
 use wasmer_runtime::Value;
 use wasmer_runtime::imports;
 use wasmer_runtime::func;
@@ -8,6 +10,9 @@ use winapi::um::fileapi::ReadFile;
 use winapi::um::fileapi::WriteFile;
 use winapi::um::winnt::HANDLE;
 use winapi::shared::minwindef::LPVOID;
+use winapi::shared::minwindef::LPCVOID;
+
+use std::io::Write; // WAT
 
 fn print_str(ctx: &mut wasmer_runtime::Ctx, ptr: u32, len: u32) {
     // Get a slice that maps to the memory currently used by the webassembly
@@ -74,6 +79,8 @@ struct ControlHeader {
   handle_count: u32,
 }
 
+const kMessage: i32 = 2;
+
 struct InternalHeader {
     xfer_protocol_version: u32,
     descriptor_data_bytes: u32,
@@ -81,12 +88,8 @@ struct InternalHeader {
     pad1: u32,
 }
 
-fn tryread(handle_str: &String) {
-    let handle_int : usize = handle_str.parse().unwrap();
-    let handle = handle_int as HANDLE;
+fn send_message(socket: HANDLE, message: &[u8]) {
     let mut bytes: u32 = 0;
-    let mut buf = [0u8; 999];
-    let mut wbuf : [u8;5] = [0,4,5,6,7];
     let mut header = ControlHeader {
         command: 2, // kMessage
         pid: 0,
@@ -99,35 +102,82 @@ fn tryread(handle_str: &String) {
         pad0: 123,
         pad1: 456,
     };
-  for _ in 0..1 {
-    if 0 == unsafe{
-        WriteFile(handle, &mut header as *mut ControlHeader as LPVOID, 4*4, &mut bytes, std::ptr::null_mut());
-        WriteFile(handle, &mut header2 as *mut InternalHeader as LPVOID, 16, &mut bytes, std::ptr::null_mut());
-        WriteFile(handle, &mut wbuf[0] as *mut u8 as LPVOID, 5, &mut bytes, std::ptr::null_mut())
+    let mut more = 0u8;
+    if unsafe {
+        0 == WriteFile(socket, &mut header as *mut ControlHeader as LPVOID, 16, &mut bytes, std::ptr::null_mut()) ||
+        0 == WriteFile(socket, &mut header2 as *mut InternalHeader as LPVOID, 16, &mut bytes, std::ptr::null_mut()) ||
+        0 == WriteFile(socket, &mut more as *mut u8 as LPVOID, 1, &mut bytes, std::ptr::null_mut()) ||
+        0 == WriteFile(socket, &message[0] as *const u8 as LPCVOID, message.len() as u32, &mut bytes, std::ptr::null_mut())
     } {
-        println!("failde to writed file");
-        return;
+        //handle error
     }
-  }
-    println!("{} bytes written", bytes);
-    if 0 == unsafe{
-        ReadFile(handle, &mut buf[0] as *mut u8 as LPVOID, 999, &mut bytes, std::ptr::null_mut())
-    } {
-        println!("failde to readed file");
-        return;
+}
+
+fn read_message(socket: HANDLE, log: &mut File) -> Vec<u8> {
+    let mut header = MaybeUninit::<ControlHeader>::uninit();
+    let mut header2 = MaybeUninit::<InternalHeader>::uninit();
+    let mut more: u8 = 0;
+    let mut bytes: u32 = 0;
+    if 0 == unsafe { ReadFile(socket, header.as_mut_ptr() as LPVOID, 16, &mut bytes, std::ptr::null_mut()) } {
+        writeln!(log, "control header read failed");
+        panic!("");
     }
-    println!("{} bytes read", bytes);
+    let header = unsafe { header.assume_init() };
+    if header.command != kMessage {
+        writeln!(log, "unhandled command {}", header.command);
+        panic!("");
+    }
+    if header.handle_count != 0 {
+        writeln!(log, "nonzero handle count");
+        panic!("");
+    }
+    if header.message_length <= 17 {
+        writeln!(log, "message_length too low: {}", header.message_length);
+        panic!("");
+    }
+    if unsafe { 0 == ReadFile(socket, header2.as_mut_ptr() as LPVOID, 16, &mut bytes, std::ptr::null_mut()) ||
+                0 == ReadFile(socket, (&mut more) as *mut u8 as LPVOID, 1, &mut bytes, std::ptr::null_mut()) } {
+        writeln!(log, "read failed");
+        panic!("");
+    }
+    if more != 0 {
+        writeln!(log, "don't know how to get more");
+        panic!("");
+    }
+    let header2 = unsafe { header2.assume_init() };
+    if header2.descriptor_data_bytes != 0 {
+        writeln!(log, "descriptor_data_bytes = {}", header2.descriptor_data_bytes);
+        panic!("");
+    }
+    writeln!(log, "headers ok");
+    let len = header.message_length - 17;
+    let mut v = vec![0u8; len as usize];
+    
+    if 0 == unsafe { ReadFile(socket, (&mut v[0]) as *mut u8 as LPVOID, len, &mut bytes, std::ptr::null_mut()) } {
+        writeln!(log, "read body faile");
+        panic!("");
+    }
+    
+    writeln!(log, "read succeeded len {}", len);
+    
+    return v;
 }
 
 fn main() {
+    let mut log = File::create(&"C:/unv/Unvanquished/daemon/src/engine/sandbox/log.txt").unwrap();
+    writeln!(log, "started");
     let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
+    if args.len() < 3 {
         std::process::exit(1);
     }
-    println!("jjjjjjjjjjjjjj");
-    if args.len() > 2 {
-        tryread(&args[2]);
-    }
+    writeln!(log, "enough args");
+    let handle_int : usize = args[2].parse().unwrap();
+    let handle = handle_int as HANDLE;
+    
+    send_message(handle, &[3, 0, 0, 0]);
+    
+    writeln!(log, "sent abi message");
+    
     let binary: Vec<u8> = std::fs::read(&args[1]).unwrap();
     let mut import_object = imports! {
         "env" => {
@@ -146,32 +196,24 @@ fn main() {
         },
     };
     import_object.allow_missing_functions = true;
-    println!("a");
     let instance = wasmer_runtime::instantiate(&binary, &import_object).unwrap();
-    println!("b");
-    println!("{:?}",instance.call("_start", &[]).unwrap());
-    println!("c");
+    writeln!(log, "instantiated");
+    instance.call("_start", &[]).unwrap();
+    writeln!(log, "static inited");
+    loop {
+        let v: Vec<u8> = read_message(handle, &mut log);
+        let bufadr: u32 = match instance.call("GetWasmbuf", &[Value::I32(v.len() as i32)]).unwrap()[0] {
+            Value::I32(x) => x as u32,
+            _ => panic!(""),
+        };
+        writeln!(log, "got wasmbuf");
+        let mut lol: &[core::cell::Cell<u8>] = &instance.context().memory(0).view()[bufadr as usize .. (bufadr as usize) + v.len()];
+        writeln!(log, "lol size: {}", lol.len());
+        for i in 0 .. v.len() {
+            lol[i].set(v[i]);
+        }
+        writeln!(log, "{:?}", instance.call("WasmHandleSyscall", &[Value::I32(v.len() as i32)]));
+        writeln!(log, "handled syscall");
+    }
 }
 
-fn mainstatic() {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() != 2 {
-        std::process::exit(1);
-    }
-    let binary: Vec<u8> = std::fs::read(&args[1]).unwrap();
-    let import_object = imports! {
-    "env"=>{
-        "print_str" =>  func!(print_str),
-        },
-    };
-    println!("a");
-    let instance = wasmer_runtime::instantiate(&binary, &import_object).unwrap();
-    println!("b");
-    println!("{:?}",instance.call("jj", &[]).unwrap());
-    println!("{:?}",instance.call("_start", &[]).unwrap());
-    println!("{:?}",instance.call("jj", &[]).unwrap());
-    println!("{:?}",instance.call("_start", &[]).unwrap());
-    println!("{:?}",instance.call("jj", &[]).unwrap());
-    //println!("{:?}",instance.call("add", &[Value::I32(3),Value::I32(5)]).unwrap());
-    println!("c");
-}

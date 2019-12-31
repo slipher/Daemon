@@ -39,7 +39,6 @@ namespace IPC {
         Util::Writer reply;
     };
 }
-void DoSyscall(uint32_t id, Util::Reader reader, IPC::Channel& channel);
 #endif
 
 namespace IPC {
@@ -157,7 +156,6 @@ namespace IPC {
             writer.WriteArgs(Util::TypeListFromTuple<typename Message::Inputs>(), std::forward<Args>(args)...);
             Util::Reader reader;
             reader.data = std::move(writer.data);
-            DoSyscall(Message::id, std::move(reader), channel);
 #else
             if (!channel.canSendAsyncMsg)
                 Sys::Drop("Attempting to send a Message in VM toplevel with id: 0x%x", Message::id);
@@ -178,7 +176,6 @@ namespace IPC {
             writer.WriteArgs(Util::TypeListFromTuple<typename Message::Inputs>(), std::forward<Args>(args)...);
             Util::Reader reader;
             reader.data = std::move(writer.data);
-            DoSyscall(Message::id, std::move(reader), channel);
             Util::Reader reply;
             reply.data = std::move(channel.reply.data);
             auto out = std::forward_as_tuple(std::forward<Args>(args)...);

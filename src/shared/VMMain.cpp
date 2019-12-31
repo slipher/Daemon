@@ -34,15 +34,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _WIN32
 #include <unistd.h>
 #endif
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 IPC::Channel VM::rootChannel;
-
-#ifdef __EMSCRIPTEN__
-#include "engine/framework/VirtualMachine.h"
-void DoSyscall(uint32_t id, Util::Reader reader, IPC::Channel& channel) {
-	//VM::activeVM->Syscall(id, std::move(reader), channel);
-}
-#else
 
 // Special exception type used to cleanly exit a thread for in-process VMs
 #ifdef BUILD_VM_IN_PROCESS
@@ -52,6 +48,33 @@ namespace {
 class ExitException {};
 }
 #endif
+
+#ifdef __EMSCRIPTEN__
+
+std::vector<char> wasmbuf;
+
+extern "C" {
+	EMSCRIPTEN_KEEPALIVE
+	char* GetWasmbuf(uint32_t size)
+	{
+		if (size > wasmbuf.size())
+			wasmbuf.resize(size);
+		return &wasmbuf[0];
+	}
+
+	EMSCRIPTEN_KEEPALIVE
+	void WasmHandleSyscall(uint32_t len)
+	{
+		Util::Reader reader;
+		reader.data.assign(&wasmbuf[0], &wasmbuf[len]);
+		uint32_t id = reader.Read<uint32_t>();
+		VM::VMHandleSyscall(id, std::move(reader));
+	}
+
+	void WasmLog(const char* message, uint32_t len);
+}
+
+#else
 
 // Common initialization code for both VM types
 static void CommonInit(Sys::OSHandle rootSocket)
