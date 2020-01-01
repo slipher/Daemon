@@ -95,7 +95,6 @@ void trap_SetUserCmdValue( int stateValue, int flags, float sensitivityScale )
 	VM::SendMsg<SetUserCmdValueMsg>(stateValue, flags, sensitivityScale);
 }
 
-#ifndef BUILD_SGAME
 bool trap_GetEntityToken( char *buffer, int bufferSize )
 {
 	bool res;
@@ -104,7 +103,6 @@ bool trap_GetEntityToken( char *buffer, int bufferSize )
 	Q_strncpyz(buffer, token.c_str(), bufferSize);
 	return res;
 }
-#endif
 
 void trap_RegisterButtonCommands( const char *cmds )
 {
@@ -118,14 +116,12 @@ void trap_GetClipboardData( char *buf, int bufsize )
 	Q_strncpyz(buf, data.c_str(), bufsize);
 }
 
-#ifndef BUILD_SGAME
 void trap_QuoteString( const char *str, char *buffer, int size )
 {
 	std::string quoted;
 	VM::SendMsg<QuoteStringMsg>(size, str, quoted);
 	Q_strncpyz(buffer, quoted.c_str(), size);
 }
-#endif
 
 void trap_Gettext( char *buffer, const char *msgid, int bufferLength )
 {

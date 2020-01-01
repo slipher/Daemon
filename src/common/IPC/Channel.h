@@ -268,7 +268,6 @@ namespace IPC {
     // Send a message to the given channel. If the message is synchronous then messageHandler is invoked for all
     // message that are received until ID_RETURN is received. Values returned by a synchronous message are
     // returned through reference parameters.
-    // In Emscripten, only used for messages from VM to engine
     template<typename Msg, typename Func, typename... Args> void SendMsg(Channel& channel, Func&& messageHandler, Args&&... args)
     {
         detail::SendMsg(channel, messageHandler, Msg(), std::forward<Args>(args)...);

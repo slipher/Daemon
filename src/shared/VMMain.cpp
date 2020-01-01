@@ -54,6 +54,7 @@ class ExitException {};
 std::vector<char> wasmbuf;
 
 extern "C" {
+	void WasmLog(const char* message, size_t len);
 	EMSCRIPTEN_KEEPALIVE
 	char* GetWasmbuf(uint32_t size)
 	{
@@ -65,13 +66,15 @@ extern "C" {
 	EMSCRIPTEN_KEEPALIVE
 	void WasmHandleSyscall(uint32_t len)
 	{
+		const char* m = "entering wasmhandlesyscall";
+		WasmLog(m, strlen(m));
 		Util::Reader reader;
 		reader.data.assign(&wasmbuf[0], &wasmbuf[len]);
 		uint32_t id = reader.Read<uint32_t>();
 		VM::VMHandleSyscall(id, std::move(reader));
+		m = "exiting wasmhandlesyscall";
+		WasmLog(m, strlen(m));
 	}
-
-	void WasmLog(const char* message, uint32_t len);
 }
 
 #else

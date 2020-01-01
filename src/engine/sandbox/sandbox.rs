@@ -32,11 +32,11 @@ fn print_str(ctx: &mut wasmer_runtime::Ctx, ptr: u32, len: u32) {
     let string = std::str::from_utf8(&str_vec).unwrap();
 
     // Print it!
-    println!("{}", string);
+    eprintln!("vm: {}", string);
 }
 
 fn emscripten_saveSetjmp(_env: i32, _label: i32, _table: i32, _size: i32)-> i32 {
-    println!("setjmp called");
+    eprintln!("setjmp called");
     return 0;
 }
 fn emscripten_testSetjmp(_id: i32, _table: i32, _size: i32)-> i32 {
@@ -44,7 +44,7 @@ fn emscripten_testSetjmp(_id: i32, _table: i32, _size: i32)-> i32 {
 }
 
 fn emscripten_roundf(x: f32) -> f32 {
-    println!("roundf called");
+    eprintln!("roundf called");
     return x.round();
 }
 
@@ -119,67 +119,62 @@ fn read_message(socket: HANDLE, log: &mut File) -> Vec<u8> {
     let mut more: u8 = 0;
     let mut bytes: u32 = 0;
     if 0 == unsafe { ReadFile(socket, header.as_mut_ptr() as LPVOID, 16, &mut bytes, std::ptr::null_mut()) } {
-        writeln!(log, "control header read failed");
-        panic!("");
+        panic!("control header read failed");
     }
     let header = unsafe { header.assume_init() };
     if header.command != kMessage {
-        writeln!(log, "unhandled command {}", header.command);
-        panic!("");
+        panic!("unhandled command {}", header.command);
     }
     if header.handle_count != 0 {
-        writeln!(log, "nonzero handle count");
-        panic!("");
+        panic!("nonzero handle count");
     }
     if header.message_length <= 17 {
-        writeln!(log, "message_length too low: {}", header.message_length);
-        panic!("");
+        panic!("message_length too low: {}", header.message_length);
     }
     if unsafe { 0 == ReadFile(socket, header2.as_mut_ptr() as LPVOID, 16, &mut bytes, std::ptr::null_mut()) ||
                 0 == ReadFile(socket, (&mut more) as *mut u8 as LPVOID, 1, &mut bytes, std::ptr::null_mut()) } {
-        writeln!(log, "read failed");
-        panic!("");
+        panic!("read failed");
     }
     if more != 0 {
-        writeln!(log, "don't know how to get more");
-        panic!("");
+        panic!("don't know how to get more");
     }
     let header2 = unsafe { header2.assume_init() };
     if header2.descriptor_data_bytes != 0 {
-        writeln!(log, "descriptor_data_bytes = {}", header2.descriptor_data_bytes);
-        panic!("");
+        panic!("descriptor_data_bytes = {}", header2.descriptor_data_bytes);
     }
-    writeln!(log, "headers ok");
+    eprintln!("headers ok");
     let len = header.message_length - 17;
     let mut v = vec![0u8; len as usize];
     
     if 0 == unsafe { ReadFile(socket, (&mut v[0]) as *mut u8 as LPVOID, len, &mut bytes, std::ptr::null_mut()) } {
-        writeln!(log, "read body faile");
-        panic!("");
+        panic!("read body faile");
     }
     
-    writeln!(log, "read succeeded len {}", len);
+    eprintln!("read succeeded len {}", len);
     
     return v;
 }
 
 fn main() {
     let mut log = File::create(&"C:/unv/Unvanquished/daemon/src/engine/sandbox/log.txt").unwrap();
-    writeln!(log, "started");
+    eprintln!("started");
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 {
         std::process::exit(1);
     }
-    writeln!(log, "enough args");
+    eprintln!("enough args");
     let handle_int : usize = args[2].parse().unwrap();
     let handle = handle_int as HANDLE;
     
     send_message(handle, &[3, 0, 0, 0]);
     
-    writeln!(log, "sent abi message");
+    eprintln!("sent abi message");
     
     let binary: Vec<u8> = std::fs::read(&args[1]).unwrap();
+    
     let mut import_object = imports! {
+        // why do I have to move an int lmao
+        move | | { (handle_int as LPVOID, |_| {}) },
         "env" => {
             "saveSetjmp" => func!(emscripten_saveSetjmp),
             "testSetjmp" => func!(emscripten_testSetjmp),
@@ -188,6 +183,7 @@ fn main() {
             "invoke_iii" => func!(emscripten_invoke_iii),
             "setTempRet0" => func!(emscripten_setTempRet0),
             "getTempRet0" => func!(emscripten_getTempRet0),
+            "_WasmLog" => func!(print_str),
         },
         "wasi_snapshot_preview1" => {
             "fd_read" => func!(w_fd_read),
@@ -197,23 +193,23 @@ fn main() {
     };
     import_object.allow_missing_functions = true;
     let instance = wasmer_runtime::instantiate(&binary, &import_object).unwrap();
-    writeln!(log, "instantiated");
+    eprintln!("instantiated");
     instance.call("_start", &[]).unwrap();
-    writeln!(log, "static inited");
+    eprintln!("static inited");
     loop {
         let v: Vec<u8> = read_message(handle, &mut log);
         let bufadr: u32 = match instance.call("GetWasmbuf", &[Value::I32(v.len() as i32)]).unwrap()[0] {
             Value::I32(x) => x as u32,
             _ => panic!(""),
         };
-        writeln!(log, "got wasmbuf");
+        eprintln!("got wasmbuf");
         let mut lol: &[core::cell::Cell<u8>] = &instance.context().memory(0).view()[bufadr as usize .. (bufadr as usize) + v.len()];
-        writeln!(log, "lol size: {}", lol.len());
+        eprintln!("lol size: {}", lol.len());
         for i in 0 .. v.len() {
             lol[i].set(v[i]);
         }
-        writeln!(log, "{:?}", instance.call("WasmHandleSyscall", &[Value::I32(v.len() as i32)]));
-        writeln!(log, "handled syscall");
+        instance.call("WasmHandleSyscall", &[Value::I32(v.len() as i32)]).unwrap();
+        eprintln!("handled syscall");
     }
 }
 

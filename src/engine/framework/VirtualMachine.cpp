@@ -337,6 +337,11 @@ std::pair<Sys::OSHandle, IPC::Socket> CreateWasmVM(std::pair<IPC::Socket, IPC::S
 	Log::Notice("Loading VM module %s...", module);
 
 	if (debugLoader) {
+		std::error_code err;
+		stderrRedirect = FS::HomePath::OpenWrite(name + ".wasm_sandbox.log", err);
+		if (err)
+			Log::Warn("Couldn't open %s: %s", name + ".wasm_sandbox.log", err.message());
+
 		std::string commandLine;
 		for (auto arg : args) {
 			if (arg) {

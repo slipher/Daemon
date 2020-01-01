@@ -468,10 +468,19 @@ void trap_Cvar_AddFlags(const char* varName, int flags) {
 
 // Log related commands
 
+extern "C" void WasmLog(const char* message, uint32_t len);
+
+int haha = [] {
+    const char* msg = "logging from global constructor";
+    WasmLog(msg, strlen(msg));
+    return 5;
+}();
+
 namespace Log {
 
     void Dispatch(Event event, int targetControl) {
-        VM::SendMsg<VM::DispatchLogEventMsg>(event.text, targetControl);
+        //VM::SendMsg<VM::DispatchLogEventMsg>(event.text, targetControl);
+        WasmLog(event.text.c_str(), event.text.size());
     }
 
 }
@@ -493,7 +502,9 @@ namespace VM {
 
     void InitializeProxies(int milliseconds) {
         baseTime = Sys::SteadyClock::now() - std::chrono::milliseconds(milliseconds);
+        Log::Debug("got time");
         Cmd::InitializeProxy();
+        Log::Debug("initialized cmd");
         Cvar::InitializeProxy();
     }
 
