@@ -197,8 +197,8 @@ fn main() {
             "invoke_iii" => func!(emscripten_invoke_iii),
             "setTempRet0" => func!(emscripten_setTempRet0),
             "getTempRet0" => func!(emscripten_getTempRet0),
-            "_WasmLog" => func!(print_str),
-            "_WasmSendMsg" => func!(handle_sync_message),
+            "WasmLog" => func!(print_str),
+            "WasmSendMsg" => func!(handle_sync_message),
         },
         "wasi_snapshot_preview1" => {
             "fd_read" => func!(w_fd_read),
