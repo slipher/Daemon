@@ -113,7 +113,21 @@ fn send_message(socket: HANDLE, message: &[u8]) {
     }
 }
 
-fn read_message(socket: HANDLE, log: &mut File) -> Vec<u8> {
+
+fn handle_sync_message(ctx: &mut wasmer_runtime::Ctx, data: u32, size: u32, replybuf: u32, bufsize: u32) -> u32 {
+    let memory = ctx.memory(0);
+    let msg: Vec<u8> = memory.view()[data as usize..(data + size) as usize].iter().map(|cell| cell.get()).collect();
+    send_message(ctx.data, &msg);
+    let reply = read_message(ctx.data);
+    let mut lol: &[core::cell::Cell<u8>] = &memory.view()[replybuf as usize .. (replybuf as usize) + reply.len()];
+    eprintln!("reply size: {}", lol.len());
+    for i in 0 .. reply.len() {
+        lol[i].set(reply[i]);
+    }
+    return reply.len() as u32;
+}
+
+fn read_message(socket: HANDLE) -> Vec<u8> {
     let mut header = MaybeUninit::<ControlHeader>::uninit();
     let mut header2 = MaybeUninit::<InternalHeader>::uninit();
     let mut more: u8 = 0;
@@ -184,6 +198,7 @@ fn main() {
             "setTempRet0" => func!(emscripten_setTempRet0),
             "getTempRet0" => func!(emscripten_getTempRet0),
             "_WasmLog" => func!(print_str),
+            "_WasmSendMsg" => func!(handle_sync_message),
         },
         "wasi_snapshot_preview1" => {
             "fd_read" => func!(w_fd_read),
@@ -197,7 +212,7 @@ fn main() {
     instance.call("_start", &[]).unwrap();
     eprintln!("static inited");
     loop {
-        let v: Vec<u8> = read_message(handle, &mut log);
+        let v: Vec<u8> = read_message(handle);
         let bufadr: u32 = match instance.call("GetWasmbuf", &[Value::I32(v.len() as i32)]).unwrap()[0] {
             Value::I32(x) => x as u32,
             _ => panic!(""),
