@@ -70,6 +70,7 @@ if(NOT DAEMON_EXTERNAL_APP)
         set(BUILD_GAME_NACL_NEXE 0)
     endif()
     option(BUILD_TTY_CLIENT "Build Daemon headless client" 1)
+    option(BUILD_SANDBOX "Build the gamelogic sandbox executable" 0)
     option(BUILD_DUMMY_APP "Build the dummy app for daemon" 0)
 
     set(NACL_RUNTIME_PATH "" CACHE STRING "Directory containing the NaCl binaries")
@@ -859,9 +860,34 @@ endif()
 # Runtime dependencies
 ################################################################################
 
+if (BUILD_SANDBOX)
+    find_program(CARGO_EXECUTABLE cargo)
+    if (NOT CARGO_EXECUTABLE)
+        message(FATAL_ERROR "cargo (Rust toolchain) not found")
+    endif()
+    # TODO: Support cross-compiling
+    # TODO: debug/release
+    add_custom_target(sandbox
+        COMMAND ${CARGO_EXECUTABLE} build 
+            "--manifest-path=${ENGINE_DIR}/sandbox/Cargo.toml"
+            "--target-dir=${CMAKE_BINARY_DIR}/rust-target" --release
+        SOURCES ${ENGINE_DIR}/sandbox/sandbox.rs
+    )
+endif()
+
 if ((BUILD_CLIENT OR BUILD_SERVER OR BUILD_TTY_CLIENT) AND NOT MONOLITHIC)
     add_custom_target(runtime_deps)
     set_target_properties(runtime_deps PROPERTIES FOLDER "CMakePlumbing")
+
+    # WASM gamelogic sandbox
+    # TODO: sandbox dep is not respected?
+    if (BUILD_SANDBOX)
+        add_custom_command(TARGET sandbox POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_BINARY_DIR}/rust-target/release/sandbox${CMAKE_EXECUTABLE_SUFFIX}
+                ${FULL_OUTPUT_DIR}/sandbox${CMAKE_EXECUTABLE_SUFFIX}
+        )
+    endif()
 
     # The NaCl loader and IRT are required to load .nexe files
     add_custom_command(TARGET runtime_deps PRE_BUILD

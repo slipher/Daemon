@@ -318,6 +318,7 @@ std::pair<Sys::OSHandle, IPC::Socket> CreateWasmVM(std::pair<IPC::Socket, IPC::S
 	std::string module, modulePath;
 	FS::File stderrRedirect;
 
+	std::string sandboxPath = FS::Path::Build(libPath, "sandbox" EXE_EXT);
 
 	// Extract the nexe from the pak so that nacl_loader can load it
 	module = name + "-wasm.wasm";
@@ -329,7 +330,7 @@ std::pair<Sys::OSHandle, IPC::Socket> CreateWasmVM(std::pair<IPC::Socket, IPC::S
 	if (!FS::RawPath::FileExists(modulePath))
 		Sys::Drop("VM module file not found: %s", modulePath);
 
-	args.push_back("C:/unv/unvanquished/daemon/src/engine/sandbox/target/debug/sandbox.exe");
+	args.push_back(sandboxPath.c_str());
 	args.push_back(modulePath.c_str());
 	args.push_back(socketHandle.c_str());
 	args.push_back(nullptr);

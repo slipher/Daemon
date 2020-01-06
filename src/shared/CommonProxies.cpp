@@ -468,6 +468,8 @@ void trap_Cvar_AddFlags(const char* varName, int flags) {
 
 // Log related commands
 
+#ifdef __EMSCRIPTEN__
+
 extern "C" void WasmLog(const char* message, uint32_t len);
 
 int haha = [] {
@@ -476,11 +478,15 @@ int haha = [] {
     return 5;
 }();
 
+#endif
+
 namespace Log {
 
     void Dispatch(Event event, int targetControl) {
-        //VM::SendMsg<VM::DispatchLogEventMsg>(event.text, targetControl);
+#ifdef __EMSCRIPTEN__
         WasmLog(event.text.c_str(), event.text.size());
+#endif
+        VM::SendMsg<VM::DispatchLogEventMsg>(event.text, targetControl);
     }
 
 }

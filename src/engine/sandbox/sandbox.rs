@@ -119,7 +119,7 @@ fn handle_sync_message(ctx: &mut wasmer_runtime::Ctx, data: u32, size: u32, repl
     let msg: Vec<u8> = memory.view()[data as usize..(data + size) as usize].iter().map(|cell| cell.get()).collect();
     send_message(ctx.data, &msg);
     let reply = read_message(ctx.data);
-    let mut lol: &[core::cell::Cell<u8>] = &memory.view()[replybuf as usize .. (replybuf as usize) + reply.len()];
+    let lol: &[core::cell::Cell<u8>] = &memory.view()[replybuf as usize .. (replybuf as usize) + reply.len()];
     eprintln!("reply size: {}", lol.len());
     for i in 0 .. reply.len() {
         lol[i].set(reply[i]);
@@ -218,7 +218,7 @@ fn main() {
             _ => panic!(""),
         };
         eprintln!("got wasmbuf");
-        let mut lol: &[core::cell::Cell<u8>] = &instance.context().memory(0).view()[bufadr as usize .. (bufadr as usize) + v.len()];
+        let lol: &[core::cell::Cell<u8>] = &instance.context().memory(0).view()[bufadr as usize .. (bufadr as usize) + v.len()];
         eprintln!("lol size: {}", lol.len());
         for i in 0 .. v.len() {
             lol[i].set(v[i]);
