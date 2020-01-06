@@ -768,6 +768,94 @@ R_ConvertBC5Image(const byte **in, byte **out, int numMips, int numLayers,
 	}
 }
 
+
+static void
+CheckBC5Image(const byte **in, int numMips, int numLayers,
+		  int width, int height, bool is3D )
+{
+	int blocks = 0;
+	int mipWidth, mipHeight, mipLayers, mipSize;
+	const byte *from;
+	int i, j, k;
+
+	int good = 0, borderline = 0, bad = 0, terrible = 0;
+
+	// Allocate buffer for converted images
+	mipWidth = width;
+	mipHeight = height;
+	mipLayers = numLayers;
+	for ( i = 0; i < numMips; i++ ) {
+		mipSize = ((mipWidth + 3) >> 2) * ((mipHeight + 3) >> 2);
+
+		blocks += mipSize * mipLayers;
+
+		if( mipWidth > 1 )
+			mipWidth >>= 1;
+		if( mipHeight > 1 )
+			mipHeight >>= 1;
+		if( is3D && mipLayers > 1 )
+			mipLayers >>= 1;
+	}
+
+	// Convert each mipmap
+	mipWidth = width;
+	mipHeight = height;
+	mipLayers = numLayers;
+	for ( i = 0; i < numMips; i++ ) {
+		mipSize = ((mipWidth + 3) >> 2) * ((mipHeight + 3) >> 2);
+
+		for( j = 0; j < mipLayers; j++ ) {
+			from = in[ i * numLayers + j ];
+
+			for( k = 0; k < mipSize; k++ ) {
+				byte rdata[16], gdata[16];
+				R_UnpackDXT5A(from, rdata);
+				R_UnpackDXT5A( from + 8, gdata );
+
+				bool nuke = false;
+				for (int z = 0; z < 16; z++) {
+					float r01 = rdata[z] / 255.f;
+					float g01 = gdata[z] / 255.f;
+					float rn = r01 * 2 - 1;
+					float gn = g01 * 2 - 1;
+					float norm = rn * rn + gn * gn;
+					if (norm > 1.1)
+						++terrible;
+					else if (norm > 1.0)
+						++bad;
+					else if (norm > 0.99999)
+						++borderline;
+					else
+						++good;
+					if (norm > 1.0                  - 1e-3)
+						nuke = true;
+					static float maxnorm = 0;
+					if (norm > 1 && norm > maxnorm) {
+						Log::defaultLogger.WithoutSuppression().Notice("biggest norm %f", norm);
+						maxnorm = norm;
+					}
+				}
+				if (nuke) {
+					byte* m = (byte*)from;
+					// make 0.5 everywhere
+					memset(m, 0, 16);
+					m[0] = m[1] = m[8] = m[9] = 128;
+				}
+
+				from += 16;
+			}
+		}
+
+		if( mipWidth > 1 )
+			mipWidth >>= 1;
+		if( mipHeight > 1 )
+			mipHeight >>= 1;
+		if( is3D && mipLayers > 1 )
+			mipLayers >>= 1;
+	}
+	Log::defaultLogger.WithoutSuppression().Notice("good %d borderline %d bad %d terrible %d", good, borderline, bad, terrible);
+}
+
 /*
 ===============
 R_UploadImage
@@ -976,6 +1064,11 @@ void R_UploadImage( const byte **dataArray, int numLayers, int numMips,
 			}
 		}
 		else if ( image->bits & IF_BC5 ) {
+			Log::defaultLogger.WithoutSuppression().Notice("checking bc5 image %s", image->name);
+			CheckBC5Image( dataArray,
+						   numMips, numLayers,
+						   scaledWidth, scaledHeight,
+						   image->type == GL_TEXTURE_3D );
 			if( !glConfig2.textureCompressionRGTCAvailable ) {
 				format = GL_NONE;
 				internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
