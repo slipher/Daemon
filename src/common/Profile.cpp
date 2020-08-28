@@ -35,7 +35,7 @@ public:
                 mx = std::max(mx, ticks);
                 tot += ticks;
             }
-            Print("%s N=%d min=%dus max=%dus tot=%dus", kv.first, v.size(), toMicros(mn), toMicros(mx), toMicros(tot));
+            Print("%s N=%d min=%dus max=%dus avg=%dus tot=%dus", kv.first, v.size(), toMicros(mn), toMicros(mx), toMicros(tot / v.size()), toMicros(tot));
         }
     }
 };
