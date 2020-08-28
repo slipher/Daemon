@@ -20,7 +20,7 @@ class ProfileStatsCmd : public Cmd::StaticCmd
 public:
     ProfileStatsCmd() : StaticCmd("profstats", 0, "Print profile stats") {}
 
-    void Run(const Cmd::Args&) const OVERRIDE
+    void Run(const Cmd::Args&) const override
     {
         LARGE_INTEGER frequency;
         QueryPerformanceFrequency(&frequency);
@@ -46,7 +46,7 @@ class ProfileStatsClearCmd : public Cmd::StaticCmd
 public:
     ProfileStatsClearCmd() : StaticCmd("profclear", 0, "Clear profile stats") {}
 
-    void Run(const Cmd::Args&) const OVERRIDE
+    void Run(const Cmd::Args&) const override
     {
         tickCounts.clear();
     }
