@@ -27,6 +27,8 @@ public:
         auto toMicros = [frequency](int64_t ticks) {
             return ticks * 1000 * 1000 / frequency.QuadPart;
         };
+        // HACK: Print all lines as one giant log message so that the whole thing can show up in a screenshot
+        std::string message;
         for (const auto& kv: tickCounts) {
             auto& v = kv.second;
             int64_t mn = std::numeric_limits<int64_t>::max(), mx = std::numeric_limits<int64_t>::min(), tot = 0;
@@ -35,8 +37,13 @@ public:
                 mx = std::max(mx, ticks);
                 tot += ticks;
             }
-            Print("%s N=%d min=%dus max=%dus avg=%dus tot=%dus", kv.first, v.size(), toMicros(mn), toMicros(mx), toMicros(tot / v.size()), toMicros(tot));
+            if (!message.empty()) {
+                message.push_back('\n');
+            }
+            message += Str::Format("%s N=%d min=%dus max=%dus avg=%dus tot=%dus",
+                                   kv.first, v.size(), toMicros(mn), toMicros(mx), toMicros(tot / v.size()), toMicros(tot));
         }
+        Print(message);
     }
 };
 static ProfileStatsCmd profstatsRegistration;
