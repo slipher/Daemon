@@ -53,6 +53,8 @@ endif()
 
 project(Daemon C CXX)
 
+message(${CMAKE_FIND_LIBRARY_SUFFIXES})
+
 ################################################################################
 # Configuration options
 ################################################################################
@@ -109,6 +111,7 @@ set(DEFAULT_NACL_VM_INHERITED_OPTIONS
     BE_VERBOSE
     BUILD_CGAME
     BUILD_SGAME
+DEPS_VERSION
     CMAKE_BUILD_TYPE
     USE_PEDANTIC
     USE_PRECOMPILED_HEADER
@@ -133,7 +136,8 @@ include(DaemonPlatform)
 ################################################################################
 
 # Dependencies version, this must match the number in external_deps/build.sh
-set(DEPS_VERSION 4)
+set(DEPS_VERSION 4 CACHE STRING "aoeutnh")
+set(depsversion ${DEPS_VERSION} PARENT_SCOPE)
 
 set(MOUNT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(MOUNT_DIR ${MOUNT_DIR} PARENT_SCOPE)
@@ -476,6 +480,9 @@ if ( USE_STATIC_LIBS )
     endif()
 endif()
 
+# if (MINGW)
+    # set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES} .dll)
+# endif()
 
 # zlib
 if (NOT NACL)

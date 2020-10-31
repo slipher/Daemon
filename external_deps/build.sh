@@ -694,6 +694,9 @@ export MAKEFLAGS="-j`nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null || ech
 PLATFORM="${1}"
 "setup_${PLATFORM}"
 
+export V=1
+export VERBOSE=1
+
 # Build packages
 shift
 for pkg in "${@}"; do
