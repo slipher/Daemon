@@ -102,7 +102,6 @@ endfunction()
 
 set(NACL_TRANSLATE_OPTIONS
     --allow-llvm-bitcode-input # FIXME: finalize as part of the build process
-    --pnacl-allow-exceptions
     $<$<CONFIG:None>:-O3>
     $<$<CONFIG:Release>:-O3>
     $<$<CONFIG:Debug>:-O0>
