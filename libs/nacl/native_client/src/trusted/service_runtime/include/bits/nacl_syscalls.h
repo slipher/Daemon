@@ -18,6 +18,7 @@
  */
 
 #define NACL_sys_null                    1
+#define NACL_sys_nameservice             2
 
 #define NACL_sys_dup                     8
 #define NACL_sys_dup2                    9
@@ -26,11 +27,11 @@
 #define NACL_sys_read                   12
 #define NACL_sys_write                  13
 #define NACL_sys_lseek                  14
-/* 15 used to be ioctl */
+#define NACL_sys_ioctl                  15
 #define NACL_sys_stat                   16
 #define NACL_sys_fstat                  17
 #define NACL_sys_chmod                  18
-#define NACL_sys_isatty                 19
+/* no fchmod emulation on windows */
 
 #define NACL_sys_brk                    20
 #define NACL_sys_mmap                   21
@@ -41,10 +42,6 @@
 #define NACL_sys_mprotect               24
 
 #define NACL_sys_list_mappings          25
-
-#define NACL_sys_fsync                  26
-#define NACL_sys_fdatasync              27
-#define NACL_sys_fchmod                 28
 
 #define NACL_sys_exit                   30
 #define NACL_sys_getpid                 31
@@ -62,9 +59,6 @@
 #define NACL_sys_chdir                  47
 #define NACL_sys_getcwd                 48
 #define NACL_sys_unlink                 49
-#define NACL_sys_fchdir                 50
-
-#define NACL_sys_ftruncate              52
 
 /* 50-58 previously used for multimedia syscalls */
 
@@ -122,17 +116,6 @@
 #define NACL_sys_pread                  130
 #define NACL_sys_pwrite                 131
 
-#define NACL_sys_truncate               140
-#define NACL_sys_lstat                  141
-#define NACL_sys_link                   142
-#define NACL_sys_rename                 143
-#define NACL_sys_symlink                144
-#define NACL_sys_access                 145
-#define NACL_sys_readlink               146
-#define NACL_sys_utimes                 147
-
-#define NACL_sys_get_random_bytes       150
-
-#define NACL_MAX_SYSCALLS               151
+#define NACL_MAX_SYSCALLS               132
 
 #endif

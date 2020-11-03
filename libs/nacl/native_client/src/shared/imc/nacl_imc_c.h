@@ -16,7 +16,6 @@
 #ifndef NATIVE_CLIENT_SRC_SHARED_IMC_NACL_IMC_C_H_
 #define NATIVE_CLIENT_SRC_SHARED_IMC_NACL_IMC_C_H_
 
-#include "native_client/src/include/build_config.h"
 #include "native_client/src/include/portability.h"
 #ifndef __native_client__
 #include "native_client/src/trusted/service_runtime/include/machine/_types.h"
@@ -28,6 +27,10 @@ struct NaClDescEffector;
 #ifdef __cplusplus
 extern "C" {
 #endif  /* __cplusplus */
+
+/* Get the last error message string. */
+int NaClGetLastErrorString(char* buffer, size_t length);
+
 
 /*
  * NaCl resource descriptor type NaCl resource descriptors can be
@@ -238,6 +241,27 @@ typedef NaClHandle (*NaClCreateMemoryObjectFunc)(size_t length, int executable);
  */
 void NaClSetCreateMemoryObjectFunc(NaClCreateMemoryObjectFunc func);
 
+#if NACL_WINDOWS
+/*
+ * Type of function supplied to NaClSetBrokerDuplicateHandleFunc().
+ * Such a function copies a Windows handle into the target process
+ * with the given process ID.  This is a more restricted version of
+ * Windows' DuplicateHandle() that can send handles but not retrieve
+ * them.
+ */
+typedef int (*NaClBrokerDuplicateHandleFunc)(NaClHandle source_handle,
+                                             uint32_t target_process_id,
+                                             NaClHandle *target_handle,
+                                             uint32_t desired_access,
+                                             uint32_t options);
+
+/*
+ * This allows a replacement for Windows' DuplicateHandle() to be
+ * provided that works in an outer sandbox.
+ */
+void NaClSetBrokerDuplicateHandleFunc(NaClBrokerDuplicateHandleFunc func);
+#endif
+
 /*
  * Creates a memory object of length bytes.
  *
@@ -252,20 +276,41 @@ void NaClSetCreateMemoryObjectFunc(NaClCreateMemoryObjectFunc func);
 
 NaClHandle NaClCreateMemoryObject(size_t length, int executable);
 
+/* NaClMap() prot bits */
+#define NACL_PROT_READ    0x1   /* Mapped area can be read */
+#define NACL_PROT_WRITE   0x2   /* Mapped area can be written */
+#define NACL_PROT_EXEC    0x4   /* Mapped area can be executed */
+
+/* NaClMap() flags */
+#define NACL_MAP_SHARED   0x1   /* Create a sharable mapping with other */
+                                /* processes */
+#define NACL_MAP_PRIVATE  0x2   /* Create a private copy-on-write mapping */
+#define NACL_MAP_FIXED    0x4   /* Try to create a mapping at the specified */
+                                /* address */
+
+#define NACL_MAP_FAILED   ((void*) -1)
+
 /*
  * Maps the specified memory object in the process address space.
  *
- * NaClMap() returns a pointer to the mapped area, or NACL_ABI_MAP_FAILED upon
+ * NaClMap() returns a pointer to the mapped area, or NACL_MAP_FAILED upon
  * error.
- * For prot, the bitwise OR of the NACL_ABI_PROT_* bits must be specified.
- * For flags, either NACL_ABI_MAP_SHARED or NACL_ABI_MAP_PRIVATE must
- * be specified.
- * If NACL_ABI_MAP_FIXED is also set, NaClMap() tries to map the
- * memory object at the address specified by start.
+ * For prot, the bitwise OR of the NACL_PROT_* bits must be specified.
+ * For flags, either NACL_MAP_SHARED or NACL_MAP_PRIVATE must be specified.
+ * If NACL_MAP_FIXED is also set, NaClMap() tries to map the memory object at
+ * the address specified by start.
  */
 void* NaClMap(struct NaClDescEffector* effp,
               void* start, size_t length, int prot, int flags,
               NaClHandle memory, off_t offset);
+
+/*
+ * Unmaps the memory objects mapped within the specified process
+ * address space range.
+ *
+ * NaClUnmap() returns 0 on success, and -1 on failure.
+ */
+int NaClUnmap(void* start, size_t length);
 
 #ifdef __cplusplus
 }

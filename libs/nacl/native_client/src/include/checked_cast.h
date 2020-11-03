@@ -1,7 +1,7 @@
 /*
- * Copyright 2010 The Native Client Authors. All rights reserved.
- * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file.
+ * Copyright 2010 The Native Client Authors.  All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can
+ * be found in the LICENSE file.
  */
 
 //
@@ -14,16 +14,20 @@
 #ifndef NATIVE_CLIENT_SRC_INCLUDE_CHECKED_CAST_H_
 #define NATIVE_CLIENT_SRC_INCLUDE_CHECKED_CAST_H_ 1
 
-#include "native_client/src/include/build_config.h"
-
 // Windows defines std::min and std::max in a different header
-// than gcc prior to Visual Studio 2013.
+// than gcc.
 #if NACL_WINDOWS
 #include <xutility>
 #endif
 
-#include <algorithm>
 #include <limits>
+
+#if !NACL_WINDOWS
+// this is where std::min/max SHOULD live. It's included here (rather than
+// in an else block along with the Windows include above) to avoid breaking
+// google cpplint's header file inclusion order rules.
+#include <algorithm>
+#endif
 
 // TODO(ilewis): remove reference to base as soon as we can get COMPILE_ASSERT
 //                from another source.
