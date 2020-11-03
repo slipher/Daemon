@@ -19,24 +19,11 @@
 #include <string>
 #include <windows.h>
 #include <sys/types.h>
-#ifdef __MINGW32__
-#include <stdint.h>
-#define sprintf_s snprintf
-#endif
-#ifndef UINT32_MAX
-#define UINT32_MAX ((uint32_t)0xffffffffu)
-#endif
 
 #include "native_client/src/include/atomic_ops.h"
 #include "native_client/src/include/portability.h"
 #include "native_client/src/shared/imc/nacl_imc_c.h"
 
-
-static NaClBrokerDuplicateHandleFunc g_broker_duplicate_handle_func;
-
-void NaClSetBrokerDuplicateHandleFunc(NaClBrokerDuplicateHandleFunc func) {
-  g_broker_duplicate_handle_func = func;
-}
 
 /* Duplicate a Windows HANDLE within the current process. */
 NaClHandle NaClDuplicateNaClHandle(NaClHandle handle) {
@@ -64,8 +51,6 @@ static const char kPipePrefix[] = "\\\\.\\pipe\\chrome.nacl.";
 
 static const size_t kPipePrefixSize =
     sizeof kPipePrefix / sizeof kPipePrefix[0];
-static const size_t kOldPipePrefixSize =
-    sizeof kOldPipePrefix / sizeof kOldPipePrefix[0];
 
 static const int kPipePathMax = kPipePrefixSize + NACL_PATH_MAX + 1;
 static const int kOutBufferSize = 4096;  /* TBD */
@@ -149,7 +134,7 @@ static BOOL SkipFile(HANDLE handle, size_t length) {
   while (0 < length) {
     char scratch[1024];
     size_t count = std::min(sizeof scratch, length);
-    if (ReadAll(handle, scratch, count) != count) {
+    if (ReadAll(handle, scratch, count) != (int) count) {
       return FALSE;
     }
     length -= count;
@@ -171,19 +156,6 @@ static BOOL SkipHandles(HANDLE handle, size_t count) {
 
 int NaClWouldBlock() {
   return GetLastError() == ERROR_PIPE_LISTENING;
-}
-
-int NaClGetLastErrorString(char* buffer, size_t length) {
-  DWORD error = GetLastError();
-  return FormatMessageA(
-      FORMAT_MESSAGE_FROM_SYSTEM |
-      FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL,
-      error,
-      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      buffer,
-      (DWORD) ((64 * 1024 < length) ? 64 * 1024 : length),
-      NULL) ? 0 : -1;
 }
 
 NaClHandle NaClBoundSocket(const NaClSocketAddress* address) {
@@ -270,7 +242,7 @@ int NaClSendDatagram(NaClHandle handle, const NaClMessageHeader* message,
     return -1;
   }
   if (0 < message->handle_count && message->handles) {
-    HANDLE target;
+    HANDLE target = NULL;
     /*
      * TODO(shiki): On Windows Vista, we can use GetNamedPipeClientProcessId()
      * and GetNamedPipeServerProcessId() and probably we can remove
@@ -281,25 +253,15 @@ int NaClSendDatagram(NaClHandle handle, const NaClMessageHeader* message,
         header.command != kEchoResponse) {
       return -1;
     }
-    if (g_broker_duplicate_handle_func == NULL) {
-      target = OpenProcess(PROCESS_DUP_HANDLE, FALSE, header.pid);
-      if (target == NULL) {
-        return -1;
-      }
+    target = OpenProcess(PROCESS_DUP_HANDLE, FALSE, header.pid);
+    if (target == NULL) {
+      return -1;
     }
     for (i = 0; i < message->handle_count; ++i) {
       HANDLE temp_remote_handle;
-      bool success;
-      if (g_broker_duplicate_handle_func != NULL) {
-        success = g_broker_duplicate_handle_func(message->handles[i],
-                                                 header.pid,
-                                                 &temp_remote_handle,
-                                                 0, DUPLICATE_SAME_ACCESS) != 0;
-      } else {
-        success = DuplicateHandle(GetCurrentProcess(), message->handles[i],
-                                  target, &temp_remote_handle,
-                                  0, FALSE, DUPLICATE_SAME_ACCESS) != FALSE;
-      }
+      bool success = DuplicateHandle(GetCurrentProcess(), message->handles[i],
+                                     target, &temp_remote_handle,
+                                     0, FALSE, DUPLICATE_SAME_ACCESS) != 0;
       if (!success) {
         /*
          * Send the kCancel message to revoke the handles duplicated
@@ -311,16 +273,12 @@ int NaClSendDatagram(NaClHandle handle, const NaClMessageHeader* message,
           WriteAll(handle, &header, sizeof header);
           WriteAll(handle, remote_handles, sizeof(uint64_t) * i);
         }
-        if (g_broker_duplicate_handle_func == NULL) {
-          CloseHandle(target);
-        }
+        CloseHandle(target);
         return -1;
       }
       remote_handles[i] = (uint64_t) temp_remote_handle;
     }
-    if (g_broker_duplicate_handle_func == NULL) {
-      CloseHandle(target);
-    }
+    CloseHandle(target);
   }
   header.command = kMessage;
   header.handle_count = message->handle_count;
@@ -335,7 +293,7 @@ int NaClSendDatagram(NaClHandle handle, const NaClMessageHeader* message,
   }
   for (i = 0; i < message->iov_length; ++i) {
     if (WriteAll(handle, message->iov[i].base, message->iov[i].length) !=
-        message->iov[i].length) {
+        (int) message->iov[i].length) {
       return -1;
     }
   }
@@ -343,7 +301,7 @@ int NaClSendDatagram(NaClHandle handle, const NaClMessageHeader* message,
       WriteAll(handle,
                remote_handles,
                sizeof(uint64_t) * message->handle_count) !=
-          sizeof(uint64_t) * message->handle_count) {
+      (int) (sizeof(uint64_t) * message->handle_count)) {
     return -1;
   }
   return (int) header.message_length;
@@ -506,7 +464,7 @@ static int ReceiveDatagram(NaClHandle handle, NaClMessageHeader* message,
            ++i) {
         NaClIOVec* iov = &message->iov[i];
         uint32_t len = std::min((uint32_t) iov->length, total_message_bytes);
-        if (ReadAll(handle, iov->base, len) != len) {
+        if (ReadAll(handle, iov->base, len) != (int) len) {
           break;
         }
         total_message_bytes -= len;
@@ -524,7 +482,7 @@ static int ReceiveDatagram(NaClHandle handle, NaClMessageHeader* message,
                                          header.handle_count);
         if (ReadAll(handle, received_handles,
                     message->handle_count * sizeof(uint64_t)) !=
-            message->handle_count * sizeof(uint64_t)) {
+            (int) (message->handle_count * sizeof(uint64_t))) {
           break;
         }
         for (i = 0; i < message->handle_count; ++i) {

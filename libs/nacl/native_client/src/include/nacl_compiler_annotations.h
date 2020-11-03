@@ -7,8 +7,10 @@
 #ifndef NATIVE_CLIENT_SRC_INCLUDE_NACL_COMPILER_ANNOTATIONS_H_
 #define NATIVE_CLIENT_SRC_INCLUDE_NACL_COMPILER_ANNOTATIONS_H_
 
+#include "native_client/src/include/build_config.h"
+
 /* MSVC supports "inline" only in C++ */
-#ifdef _MSC_VER
+#if NACL_WINDOWS
 # define INLINE __forceinline
 #else
 # define INLINE __inline__
@@ -30,12 +32,10 @@
 # define ATTRIBUTE_FORMAT_PRINTF(m, n) __attribute__((format(printf, m, n)))
 #endif
 
-#ifndef __MINGW32__
 #if NACL_WINDOWS
 # define UNREFERENCED_PARAMETER(P) (P)
 #else
 # define UNREFERENCED_PARAMETER(P) do { (void) P; } while (0)
-#endif
 #endif
 
 #if NACL_WINDOWS

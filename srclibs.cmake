@@ -58,18 +58,24 @@ if (APPLE)
         ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl_imc_common.cc
         ${LIB_DIR}/nacl/native_client/src/shared/imc/posix/nacl_imc_posix.cc
         ${LIB_DIR}/nacl/native_client/src/shared/imc/osx/nacl_imc.cc
+        ${LIB_DIR}/nacl/native_client/src/shared/platform/nacl_log.c
+        ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/nacl_error.c
     )
 elseif (LINUX)
     set(NACLLIST_NATIVE
         ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl_imc_common.cc
         ${LIB_DIR}/nacl/native_client/src/shared/imc/posix/nacl_imc_posix.cc
         ${LIB_DIR}/nacl/native_client/src/shared/imc/linux/nacl_imc.cc
+        ${LIB_DIR}/nacl/native_client/src/shared/platform/nacl_log.c
+        ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/nacl_error.c
     )
 elseif (WIN32)
     set(NACLLIST_NATIVE
         ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl_imc_common.cc
         ${LIB_DIR}/nacl/native_client/src/shared/imc/win/nacl_imc.cc
         ${LIB_DIR}/nacl/native_client/src/shared/imc/win/nacl_shm.cc
+        ${LIB_DIR}/nacl/native_client/src/shared/platform/nacl_log.c
+        ${LIB_DIR}/nacl/native_client/src/shared/platform/win/nacl_error.c
     )
 endif()
 
