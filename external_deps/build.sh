@@ -510,6 +510,8 @@ download_naclport() {
 }
 build_naclports() {
 	#download "naclports-${NACLSDK_VERSION}.tar.bz2" "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACLSDK_VERSION}/naclports.tar.bz2" naclports
+    # We don't want bz2, but the freetype build has bzip2 enabled.
+    download_naclport bz2 "bzip2_1.0.6"
     download_naclport freetype "freetype_${NACLPORTS_FREETYPE_VERSION}"
     download_naclport lua "lua_${NACLPORTS_LUA_VERSION}"
     download_naclport png "libpng_${NACLPORTS_PNG_VERSION}"
@@ -517,9 +519,14 @@ build_naclports() {
 	mkdir -p "${PREFIX}/pnacl_deps/"{include,lib}
 	cp naclports-lua/payload/include/{lauxlib.h,lua.h,lua.hpp,luaconf.h,lualib.h} "${PREFIX}/pnacl_deps/include"
     cp -a naclports-freetype/payload/include/freetype2/ "${PREFIX}/pnacl_deps/include"
-    for LIB in freetype lua png; do
-        cp "naclports-${LIB}/payload/lib/lib${LIB}.a" "${PREFIX}/pnacl_deps/lib"
+    for LIB in bz2 freetype lua png; do
+        cp "naclports-${LIB}/payload/lib/lib${LIB}.a" "${PREFIX}/pnacl_deps/lib/"
     done
+    
+    # cp naclports-bzip2/payload/lib/libbz2.a "${PREFIX}/pnacl_deps/lib/"
+    # cp naclports-freetype/payload/lib/libfreetype.a "${PREFIX}/pnacl_deps/lib/"
+    # cp naclports-lua/payload/lib/liblua.a "${PREFIX}/pnacl_deps/lib/"
+    # cp naclports-png/payload/lib/libpng.a "${PREFIX}/pnacl_deps/lib/libpng16.a"
 }
 
 # For MSVC, we need to use the Microsoft LIB tool to generate import libraries,
