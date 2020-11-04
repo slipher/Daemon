@@ -139,6 +139,7 @@ include(DaemonPlatform)
 
 # Dependencies version, this must match the number in external_deps/build.sh
 set(DEPS_VERSION 4 CACHE STRING "aoeutnh")
+set(depsversion ${DEPS_VERSION} PARENT_SCOPE)
 
 set(MOUNT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(MOUNT_DIR ${MOUNT_DIR} PARENT_SCOPE)
