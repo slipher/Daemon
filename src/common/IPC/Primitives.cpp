@@ -54,7 +54,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef NORETURN
 #undef NORETURN_PTR
 #include "nacl/native_client/src/shared/imc/nacl_imc_c.h"
-#include "nacl/native_client/src/public/imc_syscalls.h"
 #include "nacl/native_client/src/public/imc_types.h"
 #include "nacl/native_client/src/trusted/service_runtime/nacl_config.h"
 #include "nacl/native_client/src/trusted/service_runtime/include/sys/fcntl.h"
@@ -204,6 +203,9 @@ Socket Socket::FromHandle(Sys::OSHandle handle)
 
 static void InternalSendMsg(Sys::OSHandle handle, bool more, const FileDesc* handles, size_t numHandles, const void* data, size_t len)
 {
+	NaClMessageHeader hdr;
+	NaClIOVec iov[4];
+
 	NaClHandle h[NACL_ABI_IMC_DESC_MAX];
 	for (size_t i = 0; i < numHandles; i++) {
 		if (!Sys::IsValidHandle(handles[i].handle))
@@ -212,25 +214,21 @@ static void InternalSendMsg(Sys::OSHandle handle, bool more, const FileDesc* han
 	}
 
 #ifdef __native_client__
-	NaClAbiNaClImcMsgHdr hdr;
-	NaClAbiNaClImcMsgIoVec iov[2];
 	hdr.iov = iov;
 	hdr.iov_length = 2;
-	hdr.descv = h;
-	hdr.desc_length = numHandles;
+	hdr.handles = h;
+	hdr.handle_count = numHandles;
 	hdr.flags = 0;
 	iov[0].base = &more;
 	iov[0].length = 1;
 	iov[1].base = const_cast<void*>(data);
 	iov[1].length = len;
-	if (imc_sendmsg(handle, &hdr, 0) == -1) {
+	if (NaClSendDatagram(handle, &hdr, 0) == -1) {
 		char error[256];
 		NaClGetLastErrorString(error, sizeof(error));
 		Sys::Drop("IPC: Failed to send message: %s", error);
 	}
 #else
-	NaClMessageHeader hdr;
-	NaClIOVec iov[4];
 	size_t descBytes = 0;
 	std::unique_ptr<unsigned char[]> descBuffer;
 	if (numHandles != 0) {
@@ -325,6 +323,8 @@ static void FreeHandles(const NaClHandle* h)
 
 bool InternalRecvMsg(Sys::OSHandle handle, Util::Reader& reader)
 {
+	NaClMessageHeader hdr;
+	NaClIOVec iov[2];
 	NaClHandle h[NACL_ABI_IMC_DESC_MAX];
 	std::unique_ptr<char[]> recvBuffer(new char[NACL_ABI_IMC_BYTES_MAX]);
 
@@ -332,17 +332,15 @@ bool InternalRecvMsg(Sys::OSHandle handle, Util::Reader& reader)
 		h[i] = NACL_INVALID_HANDLE;
 
 #ifdef __native_client__
-	NaClAbiNaClImcMsgHdr hdr;
-	NaClAbiNaClImcMsgIoVec iov[1];
 	hdr.iov = iov;
 	hdr.iov_length = 1;
-	hdr.descv = h;
-	hdr.desc_length = NACL_ABI_IMC_DESC_MAX;
+	hdr.handles = h;
+	hdr.handle_count = NACL_ABI_IMC_DESC_MAX;
 	hdr.flags = 0;
 	iov[0].base = recvBuffer.get();
 	iov[0].length = NACL_ABI_IMC_BYTES_MAX;
 
-	int result = imc_recvmsg(handle, &hdr, 0);
+	int result = NaClReceiveDatagram(handle, &hdr, 0);
 	if (result == -1) {
 		char error[256];
 		NaClGetLastErrorString(error, sizeof(error));
@@ -361,8 +359,6 @@ bool InternalRecvMsg(Sys::OSHandle handle, Util::Reader& reader)
 	reader.GetData().insert(reader.GetData().end(), &recvBuffer[1], &recvBuffer[result]);
 	return recvBuffer[0];
 #else
-	NaClMessageHeader hdr;
-	NaClIOVec iov[2];
 	NaClInternalHeader internalHdr;
 	hdr.iov = iov;
 	hdr.iov_length = 2;
