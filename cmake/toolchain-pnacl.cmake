@@ -51,15 +51,20 @@ set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_INCLUDES 1)
 set(CMAKE_C_RESPONSE_FILE_LINK_FLAG "@")
 set(CMAKE_CXX_RESPONSE_FILE_LINK_FLAG "@")
 
+if (NOT CMAKE_HOST_WIN32)
     set(PythonInterp_FIND_VERSION 2)
     find_package(PythonInterp 2)
     if (NOT PYTHONINTERP_FOUND)
-        message(FATAL_ERROR "Please set the PYTHON_EXECUTABLE CMake variable to your Python2 executable")
+        message(FATAL_ERROR "Please set the PNACLPYTHON environment variable to your Python2 executable")
     endif()
-    set(PNACLPYTHON_PREFIX "${CMAKE_COMMAND} -E env PNACLPYTHON=${PYTHON_EXECUTABLE}")
+    set(PNACLPYTHON_PREFIX "env PNACLPYTHON=${PYTHON_EXECUTABLE} ")
+    set(PNACLPYTHON_PREFIX2 env "PNACLPYTHON=${PYTHON_EXECUTABLE} ")
+endif()
 
-set(CMAKE_C_CREATE_STATIC_LIBRARY "${PNACLPYTHON_PREFIX} <CMAKE_AR> rc <TARGET> <LINK_FLAGS> <OBJECTS>")
-set(CMAKE_CXX_CREATE_STATIC_LIBRARY "${PNACLPYTHON_PREFIX} <CMAKE_AR> rc <TARGET> <LINK_FLAGS> <OBJECTS>")
+# These commands can fail on windows if there is a space at the beginning
+
+set(CMAKE_C_CREATE_STATIC_LIBRARY "${PNACLPYTHON_PREFIX}<CMAKE_AR> rc <TARGET> <LINK_FLAGS> <OBJECTS>")
+set(CMAKE_CXX_CREATE_STATIC_LIBRARY "${PNACLPYTHON_PREFIX}<CMAKE_AR> rc <TARGET> <LINK_FLAGS> <OBJECTS>")
 
 # CMake 3.4 introduced an <INCLUDES> substituion that didn't exist before. It will fail on older versions with it
 # and fail on newer versions without it.
@@ -69,11 +74,11 @@ else()
     set(TOOLCHAIN_INCLUDE "<INCLUDES>")
 endif()
 
-set(CMAKE_C_COMPILE_OBJECT "${PNACLPYTHON_PREFIX} <CMAKE_C_COMPILER> <DEFINES> ${TOOLCHAIN_INCLUDE} <FLAGS> -o <OBJECT> -c <SOURCE>")
-set(CMAKE_CXX_COMPILE_OBJECT "${PNACLPYTHON_PREFIX} <CMAKE_CXX_COMPILER> <DEFINES> ${TOOLCHAIN_INCLUDE} <FLAGS> -o <OBJECT> -c <SOURCE>")
+set(CMAKE_C_COMPILE_OBJECT "${PNACLPYTHON_PREFIX}<CMAKE_C_COMPILER> <DEFINES> ${TOOLCHAIN_INCLUDE} <FLAGS> -o <OBJECT> -c <SOURCE>")
+set(CMAKE_CXX_COMPILE_OBJECT "${PNACLPYTHON_PREFIX}<CMAKE_CXX_COMPILER> <DEFINES> ${TOOLCHAIN_INCLUDE} <FLAGS> -o <OBJECT> -c <SOURCE>")
 
-set(CMAKE_C_LINK_EXECUTABLE "${PNACLPYTHON_PREFIX} <CMAKE_C_COMPILER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-set(CMAKE_CXX_LINK_EXECUTABLE "${PNACLPYTHON_PREFIX} <CMAKE_CXX_COMPILER> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+set(CMAKE_C_LINK_EXECUTABLE "${PNACLPYTHON_PREFIX}<CMAKE_C_COMPILER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+set(CMAKE_CXX_LINK_EXECUTABLE "${PNACLPYTHON_PREFIX}<CMAKE_CXX_COMPILER> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
@@ -89,7 +94,7 @@ function(pnacl_finalize target)
     add_custom_command(TARGET ${target} POST_BUILD
         COMMENT "Finalising ${target}"
         COMMAND
-            ${PNACLPYTHON_PREFIX}
+            ${PNACLPYTHON_PREFIX2}
             "${PLATFORM_PREFIX}/${PLATFORM_TRIPLET}-finalize${PNACL_BIN_EXT}"
             "$<TARGET_FILE:${target}>"
     )
@@ -118,7 +123,7 @@ function(pnacl_translate target arch suffix)
         COMMENT "Translating ${target} (${arch})"
         DEPENDS ${FILE}
         COMMAND
-            ${PNACLPYTHON_PREFIX}
+            ${PNACLPYTHON_PREFIX2}
             "${PLATFORM_PREFIX}/${PLATFORM_TRIPLET}-translate${PNACL_BIN_EXT}"
             ${NACL_TRANSLATE_OPTIONS}
             -arch ${arch}
@@ -130,7 +135,7 @@ function(pnacl_translate target arch suffix)
         COMMENT "Stripping ${target} (${arch})"
         DEPENDS ${DIRNAME}/${BASENAME}${suffix}.nexe
         COMMAND
-            ${PNACLPYTHON_PREFIX}
+            ${PNACLPYTHON_PREFIX2}
             "${PLATFORM_PREFIX}/${PLATFORM_TRIPLET}-strip${PNACL_BIN_EXT}"
             -s
             ${DIRNAME}/${BASENAME}${suffix}.nexe
