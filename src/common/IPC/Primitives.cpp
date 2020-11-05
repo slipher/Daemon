@@ -55,6 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef NORETURN_PTR
 #include "nacl/native_client/src/shared/imc/nacl_imc_c.h"
 #include "nacl/native_client/src/public/imc_syscalls.h"
+#include "nacl/native_client/src/shared/platform/nacl_error.h"
 #include "nacl/native_client/src/public/imc_types.h"
 #include "nacl/native_client/src/trusted/service_runtime/nacl_config.h"
 #include "nacl/native_client/src/trusted/service_runtime/include/sys/fcntl.h"

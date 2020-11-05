@@ -42,7 +42,14 @@ struct timeval;
 extern void IRT_pre_irtcall_hook(void);
 extern void IRT_post_irtcall_hook(void);
 
-#define NACL_GC_WRAP_SYSCALL(_expr) \
+#if defined(__GLIBC__)
+/*
+ * GC instrumentation is not supported when using nacl-glibc with direct
+ * NaCl syscalls.
+ */
+# define NACL_GC_WRAP_SYSCALL(_expr) (_expr)
+#else
+# define NACL_GC_WRAP_SYSCALL(_expr) \
   ({                                \
     __typeof__(_expr) __sysret;     \
     IRT_pre_irtcall_hook();        \
@@ -50,12 +57,11 @@ extern void IRT_post_irtcall_hook(void);
     IRT_post_irtcall_hook();       \
     __sysret;                       \
   })
+#endif
 
 /* ============================================================ */
 /* files */
 /* ============================================================ */
-
-typedef int (*TYPE_nacl_nameservice)(int *desc_in_out);
 
 typedef int (*TYPE_nacl_dup)(int oldfd);
 
@@ -77,11 +83,24 @@ typedef int (*TYPE_nacl_lseek) (int desc,
 
 typedef int (*TYPE_nacl_stat) (const char *file, struct stat *st);
 
+typedef int (*TYPE_nacl_fchdir) (int fd);
+
+typedef int (*TYPE_nacl_fchmod) (int fd, mode_t mode);
+
+typedef int (*TYPE_nacl_fsync) (int fd);
+
+typedef int (*TYPE_nacl_fdatasync) (int fd);
+
+typedef int (*TYPE_nacl_ftruncate) (int fd,
+                                    off_t *length); /* 64 bit value */
+
 typedef int (*TYPE_nacl_pread) (int fd, void *buf, size_t count, off_t *offset);
 
 typedef int (*TYPE_nacl_pwrite) (int fd,
                                  const void *buf, size_t count,
                                  off_t *offset);
+
+typedef int (*TYPE_nacl_isatty) (int fd);
 
 /* ============================================================ */
 /* imc */
@@ -167,7 +186,7 @@ typedef int (*TYPE_nacl_sem_post) (int sem);
 
 typedef int (*TYPE_nacl_getdents) (int desc, void *dirp, size_t count);
 
-typedef int (*TYPE_nacl_gettimeofday) (struct timeval *tv, void *tz);
+typedef int (*TYPE_nacl_gettimeofday) (struct timeval *tv);
 
 typedef int (*TYPE_nacl_sched_yield) (void);
 
@@ -198,6 +217,24 @@ typedef int (*TYPE_nacl_getcwd) (char *path, int len);
 
 typedef int (*TYPE_nacl_unlink) (const char *path);
 
+typedef int (*TYPE_nacl_truncate) (const char *file, off_t *length);
+
+typedef int (*TYPE_nacl_lstat) (const char *file, struct stat *st);
+
+typedef int (*TYPE_nacl_link) (const char *oldpath, const char *newpath);
+
+typedef int (*TYPE_nacl_rename) (const char *oldpath, const char *newpath);
+
+typedef int (*TYPE_nacl_symlink) (const char *oldpath, const char *newpath);
+
+typedef int (*TYPE_nacl_chmod) (const char *path, mode_t mode);
+
+typedef int (*TYPE_nacl_access) (const char *path, int amode);
+
+typedef int (*TYPE_nacl_readlink) (const char *path, char *buf, size_t bufsize);
+
+typedef int (*TYPE_nacl_utimes) (const char *path, const struct timeval *times);
+
 #ifdef __GNUC__
 typedef void (*TYPE_nacl_exit) (int status) __attribute__((noreturn));
 #else
@@ -226,7 +263,7 @@ typedef int (*TYPE_nacl_exception_handler) (
     void (*handler)(struct NaClExceptionContext *context),
     void (**old_handler)(struct NaClExceptionContext *context));
 
-typedef int (*TYPE_nacl_exception_stack) (void* stack, size_t size);
+typedef int (*TYPE_nacl_exception_stack) (void *stack, size_t size);
 
 typedef int (*TYPE_nacl_exception_clear_flag) (void);
 
@@ -238,6 +275,8 @@ typedef int (*TYPE_nacl_futex_wait_abs) (volatile int *addr, int value,
                                          const struct timespec *abstime);
 
 typedef int (*TYPE_nacl_futex_wake) (volatile int *addr, int nwake);
+
+typedef int (*TYPE_nacl_get_random_bytes) (void *buf, size_t buf_size);
 
 #if defined(__cplusplus)
 }

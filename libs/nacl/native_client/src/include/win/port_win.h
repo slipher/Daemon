@@ -54,24 +54,31 @@
 #include <windows.h>
 
 /* types missing on Windows */
-typedef long              off_t;
-typedef unsigned int      uint32_t;
-typedef int               int32_t;
-typedef unsigned char     uint8_t;
-typedef unsigned int      u_int32_t;
+typedef signed char       __int8_t;
+typedef unsigned char     __uint8_t;
+typedef short             __int16_t;
 typedef unsigned short    __uint16_t;
-typedef unsigned short    uint16_t;
-typedef short             int16_t;
-#ifndef __MINGW32__
+typedef int               __int32_t;
+typedef unsigned int      __uint32_t;
+typedef __int64           __int64_t;
+typedef unsigned __int64  __uint64_t;
+
+typedef __int8_t          int8_t;
+typedef __uint8_t         uint8_t;
+typedef __int16_t         int16_t;
+typedef __uint16_t        uint16_t;
+typedef __int32_t         int32_t;
+typedef __uint32_t        uint32_t;
+typedef __uint32_t        u_int32_t;
+typedef __int64_t         int64_t;
+typedef __uint64_t        uint64_t;
+
+typedef long              off_t;
 typedef int               mode_t;
-#endif
 typedef long              _off_t;
 typedef long int          __loff_t;
-typedef signed char       int8_t;
 typedef unsigned long     DWORD;
 typedef long              clock_t;
-typedef __int64           int64_t;
-typedef unsigned __int64  uint64_t;
 
 #ifdef _WIN64
 typedef int64_t           ssize_t;
@@ -87,6 +94,9 @@ typedef int32_t           ssize_t;
  *
  * Only including range values actually used in our codebase.
  */
+#if _MSC_VER >= 1800
+#include <stdint.h>
+#else
 # if !defined(UINT8_MAX)
 #  define UINT8_MAX      NACL_UMAX_VAL(uint8_t)
 # endif
@@ -124,12 +134,13 @@ typedef int32_t           ssize_t;
 #  define INT64_MIN      NACL_MIN_VAL(int64_t)
 # endif
 #endif
+#endif  /* _MSC_VER >= 1800 */
 
 EXTERN_C_BEGIN
 
 /* arguments processing */
 int ffs(int x);
-int getopt(int argc, char *argv[], char *optstring);
+int getopt(int argc, char *argv[], const char *optstring);
 extern char *optarg;  /* global argument pointer */
 extern int optind;   /* global argv index */
 
@@ -149,8 +160,6 @@ EXTERN_C_END
 
 
 /* from linux/limits.h, via sys/param.h */
-#ifndef __MINGW32__
 #define PATH_MAX 4096
-#endif
 
 #endif  /* NATIVE_CLIENT_SRC_INCLUDE_WIN_PORT_WIN_H_ */

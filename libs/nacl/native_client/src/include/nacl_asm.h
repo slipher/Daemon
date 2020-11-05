@@ -7,6 +7,8 @@
 #ifndef NATIVE_CLIENT_SRC_INCLUDE_NACL_ASM_H_
 #define NATIVE_CLIENT_SRC_INCLUDE_NACL_ASM_H_
 
+#include "native_client/src/include/build_config.h"
+
 /*
  * macros to provide uniform access to identifiers from assembly due
  * to different C -> asm name mangling conventions and other platform-specific
@@ -41,7 +43,30 @@
 # error "Unrecognized OS"
 #endif
 
-#define DEFINE_GLOBAL_HIDDEN_IDENTIFIER(n) \
+/*
+ * ARM requires .type XXX, %function to ensure proper switching between
+ * Thumb and ARM instruction sets on ELF-based platforms.  We do not use
+ * '.type' globally because OSX and Windows are not ELF and do not support it.
+ */
+#if defined(__ELF__)
+
+#define DEFINE_GLOBAL_HIDDEN_DATA(n) \
+  .globl IDENTIFIER(n); HIDDEN(n); .type IDENTIFIER(n), %object; IDENTIFIER(n)
+
+#define DEFINE_GLOBAL_HIDDEN_FUNCTION(n) \
+  .globl IDENTIFIER(n); HIDDEN(n); .type IDENTIFIER(n), %function; IDENTIFIER(n)
+
+#else
+
+#define DEFINE_GLOBAL_HIDDEN_DATA(n) \
+  .globl IDENTIFIER(n); HIDDEN(n); IDENTIFIER(n)
+
+#define DEFINE_GLOBAL_HIDDEN_FUNCTION(n) \
+  .globl IDENTIFIER(n); HIDDEN(n); IDENTIFIER(n)
+
+#endif
+
+#define DEFINE_GLOBAL_HIDDEN_LOCATION(n) \
   .globl IDENTIFIER(n); HIDDEN(n); IDENTIFIER(n)
 
 #endif  /* NATIVE_CLIENT_SRC_INCLUDE_NACL_ASM_H_ */
