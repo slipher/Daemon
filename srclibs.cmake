@@ -41,34 +41,9 @@ set(MUMBLELINKLIST
     ${LIB_DIR}/mumblelink/libmumblelink.h
 )
 
-# set(NACLLIST_MODULE
-    # ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl/nacl_imc.cc
-    # ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl_imc_common.cc
-    # ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_accept.c
-    # ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_connect.c
-    # ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_makeboundsock.c
-    # ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_mem_obj_create.c
-    # ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_recvmsg.c
-    # ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_sendmsg.c
-    # ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_socketpair.c
-# )
-
 set(NACLLIST_MODULE
-    ${LIB_DIR}/nacl/native_client/src/shared/gio/gio.c
-    ${LIB_DIR}/nacl/native_client/src/shared/gio/gprintf.c
-    ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl_imc_common.cc
     ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl/nacl_imc.cc
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/nacl_check.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/nacl_log.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/condition_variable.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/lock.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/nacl_error.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/nacl_exit.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/nacl_thread_id.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/nacl_threads.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/posix/nacl_timestamp.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/nacl_sync_checked.c
-    ${LIB_DIR}/nacl/native_client/src/shared/platform/refcount_base.cc
+    ${LIB_DIR}/nacl/native_client/src/shared/imc/nacl_imc_common.cc
     ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_accept.c
     ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_connect.c
     ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_makeboundsock.c
@@ -77,7 +52,6 @@ set(NACLLIST_MODULE
     ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_sendmsg.c
     ${LIB_DIR}/nacl/native_client/src/untrusted/nacl/imc_socketpair.c
 )
-
 
 if (APPLE)
     set(NACLLIST_NATIVE

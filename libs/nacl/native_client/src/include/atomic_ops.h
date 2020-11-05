@@ -39,7 +39,6 @@
  * ------------------------------------------------------------------------
  */
 
-#include "native_client/src/include/build_config.h"
 #include "native_client/src/include/nacl_base.h"
 
 #if defined(__native_client__) || NACL_LINUX

@@ -18,12 +18,10 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-
-#include "native_client/src/include/build_config.h"
-
 #if NACL_ANDROID
 #include <linux/ashmem.h>
 #endif
@@ -34,19 +32,18 @@
 
 #include "native_client/src/shared/imc/nacl_imc_c.h"
 #include "native_client/src/shared/platform/nacl_check.h"
-#include "native_client/src/trusted/service_runtime/include/bits/mman.h"
 
+
+#if NACL_LINUX && defined(NACL_ENABLE_TMPFS_REDIRECT_VAR)
+static const char kNaClTempPrefixVar[] = "NACL_TMPFS_PREFIX";
+#endif
 
 /*
  * The pathname or SHM-namespace prefixes for memory objects created
  * by CreateMemoryObject().
  */
+static const char kShmTempPrefix[] = "/tmp/google-nacl-shm-";
 static const char kShmOpenPrefix[] = "/google-nacl-shm-";
-/*
- * Default path to use for temporary shared memory files when not using
- * shm_open. This is only used if TMPDIR is not found in the environment.
- */
-static const char kDefaultTmp[] = "/tmp";
 
 static NaClCreateMemoryObjectFunc g_create_memory_object_func = NULL;
 
@@ -83,27 +80,36 @@ int NaClWouldBlock(void) {
   return errno == EAGAIN;
 }
 
+int NaClGetLastErrorString(char* buffer, size_t length) {
+#if NACL_LINUX && !NACL_ANDROID
+  char* message;
+  /*
+   * Note some Linux distributions provide only GNU version of strerror_r().
+   */
+  if (buffer == NULL || length == 0) {
+    errno = ERANGE;
+    return -1;
+  }
+  message = strerror_r(errno, buffer, length);
+  if (message != buffer) {
+    size_t message_bytes = strlen(message) + 1;
+    length = std::min(message_bytes, length);
+    memmove(buffer, message, length);
+    buffer[length - 1] = '\0';
+  }
+  return 0;
+#else
+  return strerror_r(errno, buffer, length);
+#endif
+}
+
 #if !NACL_ANDROID
 static Atomic32 memory_object_count = 0;
 
-static const char *GetTempDir() {
-  const char *tmpenv = getenv("TMPDIR");
-  if (tmpenv)
-    return tmpenv;
-  return kDefaultTmp;
-}
-
-static int TryShmOrTempOpen(size_t length, bool use_temp) {
+static int TryShmOrTempOpen(size_t length, const char* prefix, bool use_temp) {
   char name[PATH_MAX];
-  char tmpname[PATH_MAX];
-  const char *prefix = kShmOpenPrefix;
   if (0 == length) {
     return -1;
-  }
-
-  if (use_temp) {
-    snprintf(tmpname, sizeof tmpname, "%s%s", GetTempDir(), prefix);
-    prefix = tmpname;
   }
 
   for (;;) {
@@ -141,30 +147,6 @@ static int TryShmOrTempOpen(size_t length, bool use_temp) {
     /* Retry only if we got EEXIST. */
   }
 }
-
-#if NACL_LINUX
-/*
- * Attempt to set PROT_EXEC on memory mapped from a shm_open fd, and return
- * true if this is successful, false otherwise.  On many linux installations
- * /dev/shm is mounted with 'noexec' which causes this to fail.
- */
-static bool DetermineDevShmExecutable() {
-  size_t pagesize = sysconf(_SC_PAGESIZE);
-  int fd = TryShmOrTempOpen(pagesize, false);
-  if (fd < 0)
-    return false;
-
-  bool result = false;
-  void *mapping = mmap(NULL, pagesize, PROT_READ, MAP_SHARED, fd, 0);
-  if (mapping != MAP_FAILED) {
-    if (mprotect(mapping, pagesize, PROT_READ | PROT_EXEC) == 0)
-      result = true;
-    CHECK(munmap(mapping, pagesize) == 0);
-  }
-  CHECK(close(fd) == 0);
-  return result;
-}
-#endif
 #endif
 
 NaClHandle NaClCreateMemoryObject(size_t length, int executable) {
@@ -183,32 +165,35 @@ NaClHandle NaClCreateMemoryObject(size_t length, int executable) {
 #if NACL_ANDROID
   return AshmemCreateRegion(length);
 #else
-  bool use_shm_open = true;
-  if (executable) {
+  /*
+   * /dev/shm is not always available on Linux.
+   * Sometimes it's mounted as noexec.
+   * To handle this case, sel_ldr can take a path
+   * to tmpfs from the environment.
+   */
+#if NACL_LINUX && defined(NACL_ENABLE_TMPFS_REDIRECT_VAR)
+  if (NACL_ENABLE_TMPFS_REDIRECT_VAR) {
+    const char* prefix = getenv(kNaClTempPrefixVar);
+    if (prefix != NULL) {
+      fd = TryShmOrTempOpen(length, prefix, true);
+      if (fd >= 0) {
+        return fd;
+      }
+    }
+  }
+#endif
+
+  if (NACL_OSX && executable) {
     /*
      * On Mac OS X, shm_open() gives us file descriptors that the OS
      * won't mmap() with PROT_EXEC, which is no good for the dynamic
-     * code region, so we use open() in $TMPDIR instead.
+     * code region, so we must use /tmp instead.
      */
-    if (NACL_OSX)
-      use_shm_open = false;
-#if NACL_LINUX
-    /*
-     * On Linux this depends on how the system is configured (usually the
-     * presence of noexec on the /dev/shm mount point) so we need to determine
-     * this via am empirical test.
-     */
-    static bool s_dev_shm_executable = DetermineDevShmExecutable();
-    if (!s_dev_shm_executable) {
-      NaClLog(1, "NaClCreateMemoryObjectFunc: PROT_EXEC not supported by "
-                 "shm_open(), falling back to /tmp for shared exectuable "
-                 "memory.\n");
-    }
-    use_shm_open = s_dev_shm_executable;
-#endif
+    return TryShmOrTempOpen(length, kShmTempPrefix, true);
   }
 
-  return TryShmOrTempOpen(length, !use_shm_open);
+  /* Try shm_open(). */
+  return TryShmOrTempOpen(length, kShmOpenPrefix, false);
 #endif  /* !NACL_ANDROID */
 }
 
@@ -228,14 +213,18 @@ void* NaClMap(struct NaClDescEffector* effp,
   int adjusted = 0;
   UNREFERENCED_PARAMETER(effp);
 
-  if (flags & NACL_ABI_MAP_SHARED) {
+  if (flags & NACL_MAP_SHARED) {
     adjusted |= MAP_SHARED;
   }
-  if (flags & NACL_ABI_MAP_PRIVATE) {
+  if (flags & NACL_MAP_PRIVATE) {
     adjusted |= MAP_PRIVATE;
   }
-  if (flags & NACL_ABI_MAP_FIXED) {
+  if (flags & NACL_MAP_FIXED) {
     adjusted |= MAP_FIXED;
   }
   return mmap(start, length, kPosixProt[prot & 7], adjusted, memory, offset);
+}
+
+int NaClUnmap(void* start, size_t length) {
+  return munmap(start, length);
 }

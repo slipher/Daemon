@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 
-#include "native_client/src/include/build_config.h"
 #include "native_client/src/include/nacl_base.h"
 #ifdef __native_client__
 #include <bits/wordsize.h>
@@ -111,46 +110,37 @@
  */
 #if NACL_WINDOWS
 # if defined(_WIN64)
-#  define  NACL___PRIdS_PREFIX "I64"
-#  define  NACL___PRIuS_PREFIX "I64"
+#  define  NACL___PRIS_PREFIX "I64"
 # else
-#  define  NACL___PRIdS_PREFIX
-#  define  NACL___PRIuS_PREFIX
+#  define  NACL___PRIS_PREFIX
 # endif
 #elif NACL_OSX
-# define  NACL___PRIdS_PREFIX "l" /* -pedantic C++ programs w/ xcode */
-# define  NACL___PRIuS_PREFIX "l" /* -pedantic C++ programs w/ xcode */
-#elif NACL_ANDROID
-# define  NACL___PRIdS_PREFIX "z"
-# define  NACL___PRIuS_PREFIX "z"
+# define  NACL___PRIS_PREFIX "l" /* -pedantic C++ programs w/ xcode */
 #elif defined(__native_client__)
-# define NACL___PRIdS_PREFIX "z"
-# define NACL___PRIuS_PREFIX "z"
+# define NACL___PRIS_PREFIX "z"
 #elif __WORDSIZE == 64
-# define NACL___PRIdS_PREFIX "l"
-# define NACL___PRIuS_PREFIX "l"
+# define NACL___PRIS_PREFIX "l"
 #else
-# define NACL___PRIdS_PREFIX
-# define NACL___PRIuS_PREFIX
+# define NACL___PRIS_PREFIX
 #endif
 
 #if !defined(NACL_PRIdS)
-#define NACL_PRIdS NACL___PRIdS_PREFIX "d"
+#define NACL_PRIdS NACL___PRIS_PREFIX "d"
 #endif
 #if !defined(NACL_PRIiS)
-#define NACL_PRIiS NACL___PRIdS_PREFIX "i"
+#define NACL_PRIiS NACL___PRIS_PREFIX "i"
 #endif
 #if !defined(NACL_PRIoS)
-#define NACL_PRIoS NACL___PRIuS_PREFIX "o"
+#define NACL_PRIoS NACL___PRIS_PREFIX "o"
 #endif
 #if !defined (NACL_PRIuS)
-#define NACL_PRIuS NACL___PRIuS_PREFIX "u"
+#define NACL_PRIuS NACL___PRIS_PREFIX "u"
 #endif
 #if !defined(NACL_PRIxS)
-#define NACL_PRIxS NACL___PRIuS_PREFIX "x"
+#define NACL_PRIxS NACL___PRIS_PREFIX "x"
 #endif
 #if !defined(NACL_PRIXS)
-#define NACL_PRIXS NACL___PRIuS_PREFIX "X"
+#define NACL_PRIXS NACL___PRIS_PREFIX "X"
 #endif
 
 /*
