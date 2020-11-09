@@ -117,8 +117,8 @@ build_zlib() {
 	case "${PLATFORM}" in
 	mingw*|msvc*)
         # __USE_MINGW_ANSI_STDIO=0 stops sprintf from triggering dependency on a 64-bit division function in libgcc
-		LOC="${CFLAGS:-} -D__USE_MINGW_ANSI_STDIO=0" make -f win32/Makefile.gcc SHAREDLIB=zlib1daemon.dll PREFIX="${CROSS}"
-		make -f win32/Makefile.gcc install SHAREDLIB=zlib1daemon.dll BINARY_PATH="${PREFIX}/bin" LIBRARY_PATH="${PREFIX}/lib" INCLUDE_PATH="${PREFIX}/include" SHARED_MODE=1
+		LOC="${CFLAGS:-} -D__USE_MINGW_ANSI_STDIO=0" make -f win32/Makefile.gcc PREFIX="${CROSS}"
+		make -f win32/Makefile.gcc install BINARY_PATH="${PREFIX}/bin" LIBRARY_PATH="${PREFIX}/lib" INCLUDE_PATH="${PREFIX}/include" SHARED_MODE=1
 		;;
 	linux*)
 		./configure --prefix="${PREFIX}" --static --const
