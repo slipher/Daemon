@@ -40,7 +40,7 @@ build
 
 #ignore external deps
 external_deps/*
-!external_deps/build.sh
+!external_deps/*.sh
 !external_deps/cygtar.py
 
 #never ignore these in subdirectories by accident
