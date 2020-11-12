@@ -146,7 +146,8 @@ build_gmp() {
 		unset CXX
 		;;
 	esac
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	make
 	make install
 	case "${PLATFORM}" in
@@ -161,7 +162,8 @@ build_gmp() {
 build_nettle() {
 	download "nettle-${NETTLE_VERSION}.tar.gz" "https://www.lysator.liu.se/~nisse/archive/nettle-${NETTLE_VERSION}.tar.gz" nettle
 	cd "nettle-${NETTLE_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]} --enable-static
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]} --enable-static
 	make
 	make install
 }
@@ -180,7 +182,8 @@ build_geoip() {
 		TEMP_LDFLAGS="${LDFLAGS} -lws2_32"
 		;;
 	esac
-	LDFLAGS="${TEMP_LDFLAGS}" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" LDFLAGS="${TEMP_LDFLAGS}" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	make
 	make install
 }
@@ -265,7 +268,8 @@ build_glew() {
 build_png() {
 	download "libpng-${PNG_VERSION}.tar.gz" "https://download.sourceforge.net/libpng/libpng-${PNG_VERSION}.tar.gz" png
 	cd "libpng-${PNG_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	make
 	make install
 }
@@ -296,7 +300,8 @@ build_jpeg() {
 build_webp() {
 	download "libwebp-${WEBP_VERSION}.tar.gz" "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-${WEBP_VERSION}.tar.gz" webp
 	cd "libwebp-${WEBP_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	make
 	make install
 }
@@ -305,7 +310,8 @@ build_webp() {
 build_freetype() {
 	download "freetype-${FREETYPE_VERSION}.tar.gz" "https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz" freetype
 	cd "freetype-${FREETYPE_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]} --without-bzip2 --without-png --with-harfbuzz=no --with-brotli=no
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]} --without-bzip2 --without-png --with-harfbuzz=no --with-brotli=no
 	make
 	make install
 	cp -a "${PREFIX}/include/freetype2" "${PREFIX}/include/freetype"
@@ -381,7 +387,8 @@ build_vorbis() {
 build_speex() {
 	download "speex-${SPEEX_VERSION}.tar.gz" "https://downloads.xiph.org/releases/speex/speex-${SPEEX_VERSION}.tar.gz" speex
 	cd "speex-${SPEEX_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	local TMP_FILE="`mktemp /tmp/config.XXXXXXXXXX`"
 	sed "s/deplibs_check_method=.*/deplibs_check_method=pass_all/g" libtool > "${TMP_FILE}"
 	mv "${TMP_FILE}" libtool
@@ -393,7 +400,16 @@ build_speex() {
 build_opus() {
 	download "opus-${OPUS_VERSION}.tar.gz" "https://downloads.xiph.org/releases/opus/opus-${OPUS_VERSION}.tar.gz" opus
 	cd "opus-${OPUS_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+    case "${PLATFORM}" in
+    mingw*|msvc*)
+        # With MinGW _FORTIFY_SOURCE (added by configure) can only by used with -fstack-protector enabled.
+        CFLAGS="${CFLAGS:-} -O2 -D_FORTIFY_SOURCE=0" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+        ;;
+    *)
+        CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
+        ;;
+    esac
 	make
 	make install
 }
@@ -402,7 +418,8 @@ build_opus() {
 build_opusfile() {
 	download "opusfile-${OPUSFILE_VERSION}.tar.gz" "https://downloads.xiph.org/releases/opus/opusfile-${OPUSFILE_VERSION}.tar.gz" opusfile
 	cd "opusfile-${OPUSFILE_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]} --disable-http
+    # The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]} --disable-http
 	make
 	make install
 }
@@ -678,7 +695,7 @@ setup_mingw64() {
 	MSVC_SHARED=(--disable-shared --enable-static)
 	export CFLAGS="-m64"
 	export CXXFLAGS="-m64"
-	export LDFLAGS="-m64"
+	#export LDFLAGS="-m64"  # breaks glew
 	common_setup
 }
 
