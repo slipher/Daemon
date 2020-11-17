@@ -42,8 +42,7 @@ build
 external_deps/*
 !external_deps/build.sh
 !external_deps/cygtar.py
-!external_deps/mw64.sh
-!external_deps/mw32.sh
+!external_deps/wbuild.sh
 
 #never ignore these in subdirectories by accident
 !.gitattributes
