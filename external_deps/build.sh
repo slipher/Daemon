@@ -33,9 +33,6 @@ LUA_VERSION=5.4.1
 NACLSDK_VERSION=49.0.2623.87
 NACLPORTS_MAJOR=49
 NACLPORTS_REVISION=trunk-785-g807a23e
-NACLPORTS_FREETYPE_VERSION=2.5.5
-NACLPORTS_LUA_VERSION=5.3.0
-NACLPORTS_PNG_VERSION=1.6.12
 NCURSES_VERSION=6.0
 
 # Extract an archive into the given subdirectory of the build dir and cd to it
@@ -136,26 +133,10 @@ build_zlib() {
 build_gmp() {
 	download "gmp-${GMP_VERSION}.tar.bz2" "https://gmplib.org/download/gmp/gmp-${GMP_VERSION}.tar.bz2" gmp
 	cd "gmp-${GMP_VERSION}"
-	case "${PLATFORM}" in
-	msvc*)
-		# Configure script gets confused if we override the compiler. Shouldn't
-		# matter since gmp doesn't use anything from libgcc.
-		local CC_BACKUP="${CC}"
-		local CXX_BACKUP="${CXX}"
-		unset CC
-		unset CXX
-		;;
-	esac
     # The default -O2 is dropped when there's user-provided CFLAGS.
 	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	make
 	make install
-	case "${PLATFORM}" in
-	msvc*)
-		export CC="${CC_BACKUP}"
-		export CXX="${CXX_BACKUP}"
-		;;
-	esac
 }
 
 # Build Nettle
@@ -241,7 +222,6 @@ build_glew() {
 	cd "glew-${GLEW_VERSION}"
 	case "${PLATFORM}" in
 	mingw*|msvc*)
-        local BITNESS="${PLATFORM:~1}"
 		make SYSTEM="linux-mingw${BITNESS}" GLEW_DEST="${PREFIX}" CC="${CROSS}gcc" AR="${CROSS}ar" RANLIB="${CROSS}ranlib" STRIP="${CROSS}strip" LD="${CROSS}ld" CFLAGS.EXTRA="${CFLAGS:-}" LDFLAGS.EXTRA="${LDFLAGS:-}"
 		make install SYSTEM="linux-mingw${BITNESS}" GLEW_DEST="${PREFIX}" CC="${CROSS}gcc" AR="${CROSS}ar" RANLIB="${CROSS}ranlib" STRIP="${CROSS}strip" LD="${CROSS}ld" CFLAGS.EXTRA="${CFLAGS:-}" LDFLAGS.EXTRA="${LDFLAGS:-}"
         mv "${PREFIX}/lib/glew32.dll" "${PREFIX}/bin/"
@@ -283,15 +263,16 @@ build_jpeg() {
 	# make
 	# make install
     case "${PLATFORM}" in
-	mingw*)
-        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-${PLATFORM}.cmake" -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=0
+    mingw*)
+        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=0
+        ;;
+    msvc*)
+        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=1
         ;;
     macosx*)
-        # TODO
+        cmake -S . -B build -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=0
         ;;
     esac
-
-	
 	cmake --build build
 	cmake --install build
 }
@@ -444,14 +425,14 @@ build_lua() {
 		exit 1
 		;;
 	esac
-	make "${LUA_PLATFORM}" CC="${CROSS}gcc" AR="${CROSS}ar rcu" RANLIB="${CROSS}ranlib" MYCFLAGS="${CFLAGS}" MYLDFLAGS="${LDFLAGS}"
+	make "${LUA_PLATFORM}" CC="${CROSS}gcc" AR="${CROSS}ar rcu" RANLIB="${CROSS}ranlib" MYCFLAGS="${CFLAGS:-}" MYLDFLAGS="${LDFLAGS}"
 	case "${PLATFORM}" in
 	mingw*)
 		make install TO_BIN="lua.exe luac.exe" TO_LIB="liblua.a" INSTALL_TOP="${PREFIX}"
 		;;
 	msvc*)
-		make install TO_BIN="lua.exe luac.exe lua53.dll" TO_LIB="liblua.a" INSTALL_TOP="${PREFIX}"
-		touch "${PREFIX}/lib/lua53.dll.a"
+		make install TO_BIN="lua.exe luac.exe lua54.dll" TO_LIB="liblua.a" INSTALL_TOP="${PREFIX}"
+		touch "${PREFIX}/lib/lua54.dll.a"
 		;;
 	*)
 		make install INSTALL_TOP="${PREFIX}"
@@ -527,16 +508,16 @@ download_naclport() {
 }
 build_naclports() {
 	#download "naclports-${NACLSDK_VERSION}.tar.bz2" "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACLSDK_VERSION}/naclports.tar.bz2" naclports
+    download_naclport freetype "freetype_2.5.5"
+    download_naclport lua "lua_5.3.0"
+    download_naclport png "libpng_1.6.12"
     # We don't want bz2, but the freetype build has bzip2 enabled.
     download_naclport bz2 "bzip2_1.0.6"
-    download_naclport freetype "freetype_${NACLPORTS_FREETYPE_VERSION}"
-    download_naclport lua "lua_${NACLPORTS_LUA_VERSION}"
-    download_naclport png "libpng_${NACLPORTS_PNG_VERSION}"
     cd "${BUILD_DIR}"
 	mkdir -p "${PREFIX}/pnacl_deps/"{include,lib}
 	cp naclports-lua/payload/include/{lauxlib.h,lua.h,lua.hpp,luaconf.h,lualib.h} "${PREFIX}/pnacl_deps/include"
     cp -a naclports-freetype/payload/include/freetype2/ "${PREFIX}/pnacl_deps/include"
-    for LIB in bz2 freetype lua png; do
+    for LIB in freetype lua png bz2; do
         cp "naclports-${LIB}/payload/lib/lib${LIB}.a" "${PREFIX}/pnacl_deps/lib/"
     done
     
@@ -653,12 +634,13 @@ common_setup() {
 setup_msvc32() {
 	HOST=i686-w64-mingw32
 	CROSS="${HOST}-"
+    BITNESS=32
 	MSVC_SHARED=(--enable-shared --disable-static)
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
-	export CC="i686-w64-mingw32-gcc -static-libgcc"
-	export CXX="i686-w64-mingw32-g++ -static-libgcc"
-	export CFLAGS="-m32 -msse2 -mpreferred-stack-boundary=2"
-	export CXXFLAGS="-m32 -msse2 -mpreferred-stack-boundary=2"
+	#export CC="i686-w64-mingw32-gcc -static-libgcc"
+	#export CXX="i686-w64-mingw32-g++ -static-libgcc"
+	export CFLAGS="-msse2 -mpreferred-stack-boundary=2"
+	export CXXFLAGS="-msse2 -mpreferred-stack-boundary=2"
 	#export LDFLAGS="-m32"
 	common_setup
 }
@@ -667,13 +649,14 @@ setup_msvc32() {
 setup_msvc64() {
 	HOST=x86_64-w64-mingw32
 	CROSS="${HOST}-"
+    BITNESS=64
 	MSVC_SHARED=(--enable-shared --disable-static)
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
-	export CC="x86_64-w64-mingw32-gcc -static-libgcc"
-	export CXX="x86_64-w64-mingw32-g++ -static-libgcc"
-	export CFLAGS="-m64"
-	export CXXFLAGS="-m64"
-	export LDFLAGS="-m64"
+	#export CC="x86_64-w64-mingw32-gcc -static-libgcc"
+	#export CXX="x86_64-w64-mingw32-g++ -static-libgcc"
+	# export CFLAGS="-m64"
+	# export CXXFLAGS="-m64"
+	# export LDFLAGS="-m64"
 	common_setup
 }
 
@@ -681,6 +664,7 @@ setup_msvc64() {
 setup_mingw32() {
 	HOST=i686-w64-mingw32
 	CROSS="${HOST}-"
+    BITNESS=32
 	MSVC_SHARED=(--disable-shared --enable-static)
 	export CFLAGS="-m32 -msse2"
 	export CXXFLAGS="-m32 -msse2"
@@ -692,6 +676,7 @@ setup_mingw32() {
 setup_mingw64() {
 	HOST=x86_64-w64-mingw32
 	CROSS="${HOST}-"
+    BITNESS=64
 	MSVC_SHARED=(--disable-shared --enable-static)
 	export CFLAGS="-m64"
 	export CXXFLAGS="-m64"
