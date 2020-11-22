@@ -568,6 +568,11 @@ build_package() {
 	esac
 }
 
+build_clean() {
+	local NAME="${PLATFORM}-${DEPS_VERSION}"
+	rm -rf "build-${NAME}/" "${NAME}/" "${NAME}.zip"
+}
+
 # Common setup code
 common_setup() {
 	WORK_DIR="${PWD}"
@@ -672,6 +677,7 @@ if [ "${#}" -lt "2" ]; then
 	echo "Virtual packages:"
 	echo "  install - create a stripped down version of the built packages that CMake can use"
 	echo "  package - create a zip/tarball of the dependencies so they can be distributed"
+	echo "  clean - remove products of build process, excepting download cache"
 	echo
 	echo "Packages requires for each platform:"
 	echo "Linux native compile: naclsdk naclports (and possibly others depending on what packages your distribution provides)"
