@@ -114,7 +114,7 @@ build_zlib() {
 	case "${PLATFORM}" in
 	mingw*|msvc*)
         # __USE_MINGW_ANSI_STDIO=0 stops sprintf from triggering dependency on a 64-bit division function in libgcc
-		LOC="${CFLAGS:-} -D__USE_MINGW_ANSI_STDIO=0" make -f win32/Makefile.gcc PREFIX="${CROSS}"
+		LOC="${CFLAGS:-}" make -f win32/Makefile.gcc PREFIX="${CROSS}"
 		make -f win32/Makefile.gcc install BINARY_PATH="${PREFIX}/bin" LIBRARY_PATH="${PREFIX}/lib" INCLUDE_PATH="${PREFIX}/include" SHARED_MODE=1
 		;;
 	linux*)
@@ -133,10 +133,26 @@ build_zlib() {
 build_gmp() {
 	download "gmp-${GMP_VERSION}.tar.bz2" "https://gmplib.org/download/gmp/gmp-${GMP_VERSION}.tar.bz2" gmp
 	cd "gmp-${GMP_VERSION}"
+	case "${PLATFORM}" in
+	msvc*)
+		# Configure script gets confused if we override the compiler. Shouldn't
+		# matter since gmp doesn't use anything from libgcc.
+		local CC_BACKUP="${CC}"
+		local CXX_BACKUP="${CXX}"
+		unset CC
+		unset CXX
+		;;
+	esac
     # The default -O2 is dropped when there's user-provided CFLAGS.
 	CFLAGS="${CFLAGS:-} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	make
 	make install
+	case "${PLATFORM}" in
+	msvc*)
+		export CC="${CC_BACKUP}"
+		export CXX="${CXX_BACKUP}"
+		;;
+	esac
 }
 
 # Build Nettle
@@ -173,7 +189,7 @@ build_geoip() {
 build_curl() {
 	download "curl-${CURL_VERSION}.tar.bz2" "https://curl.haxx.se/download/curl-${CURL_VERSION}.tar.bz2" curl
 	cd "curl-${CURL_VERSION}"
-	./configure --host="${HOST}" --prefix="${PREFIX}" --without-ssl --without-libssh2 --without-librtmp --without-libidn --disable-file --disable-ldap --disable-crypto-auth ${MSVC_SHARED[@]}
+	./configure --host="${HOST}" --prefix="${PREFIX}" --without-ssl --without-libssh2 --without-librtmp --without-libidn --disable-file --disable-ldap --disable-crypto-auth --disable-threaded-resolver ${MSVC_SHARED[@]}
 	make
 	make install
 }
@@ -267,7 +283,7 @@ build_jpeg() {
         cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=0
         ;;
     msvc*)
-        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=1
+        CFLAGS="${CFLAGS:-} " cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=1
         ;;
     macosx*)
         cmake -S . -B build -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DWITH_JPEG8=1 -DENABLE_SHARED=0
@@ -425,7 +441,7 @@ build_lua() {
 		exit 1
 		;;
 	esac
-	make "${LUA_PLATFORM}" CC="${CROSS}gcc" AR="${CROSS}ar rcu" RANLIB="${CROSS}ranlib" MYCFLAGS="${CFLAGS:-}" MYLDFLAGS="${LDFLAGS}"
+	make "${LUA_PLATFORM}" CC="${CC}" AR="${CROSS}ar rcu" RANLIB="${CROSS}ranlib" MYCFLAGS="${CFLAGS:-}" MYLDFLAGS="${LDFLAGS}"
 	case "${PLATFORM}" in
 	mingw*)
 		make install TO_BIN="lua.exe luac.exe" TO_LIB="liblua.a" INSTALL_TOP="${PREFIX}"
@@ -642,9 +658,9 @@ setup_msvc32() {
     BITNESS=32
 	MSVC_SHARED=(--enable-shared --disable-static)
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
-	#export CC="i686-w64-mingw32-gcc -static-libgcc"
-	#export CXX="i686-w64-mingw32-g++ -static-libgcc"
-	export CFLAGS="-msse2 -mpreferred-stack-boundary=2"
+	export CC="i686-w64-mingw32-gcc -static-libgcc"
+	export CXX="i686-w64-mingw32-g++ -static-libgcc"
+	export CFLAGS="-msse2 -mpreferred-stack-boundary=2 -D__USE_MINGW_ANSI_STDIO=0"
 	export CXXFLAGS="-msse2 -mpreferred-stack-boundary=2"
 	#export LDFLAGS="-m32"
 	common_setup
@@ -657,9 +673,9 @@ setup_msvc64() {
     BITNESS=64
 	MSVC_SHARED=(--enable-shared --disable-static)
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
-	#export CC="x86_64-w64-mingw32-gcc -static-libgcc"
-	#export CXX="x86_64-w64-mingw32-g++ -static-libgcc"
-	# export CFLAGS="-m64"
+	export CC="x86_64-w64-mingw32-gcc -static-libgcc"
+	export CXX="x86_64-w64-mingw32-g++ -static-libgcc"
+	export CFLAGS="-D__USE_MINGW_ANSI_STDIO=0"
 	# export CXXFLAGS="-m64"
 	# export LDFLAGS="-m64"
 	common_setup
@@ -671,7 +687,7 @@ setup_mingw32() {
 	CROSS="${HOST}-"
     BITNESS=32
 	MSVC_SHARED=(--disable-shared --enable-static)
-	export CFLAGS="-m32 -msse2"
+	export CFLAGS="-m32 -msse2 -D__USE_MINGW_ANSI_STDIO=0"
 	export CXXFLAGS="-m32 -msse2"
 	#export LDFLAGS="-m32"
 	common_setup
@@ -683,7 +699,7 @@ setup_mingw64() {
 	CROSS="${HOST}-"
     BITNESS=64
 	MSVC_SHARED=(--disable-shared --enable-static)
-	export CFLAGS="-m64"
+	export CFLAGS="-m64 -D__USE_MINGW_ANSI_STDIO=0"
 	export CXXFLAGS="-m64"
 	#export LDFLAGS="-m64"  # breaks glew
 	common_setup
@@ -736,6 +752,7 @@ fi
 
 # Enable parallel build
 export MAKEFLAGS="-j`nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null || echo 1`"
+export MAKEFLAGS="-j2"
 
 # Setup platform
 PLATFORM="${1}"
