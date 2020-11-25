@@ -100,8 +100,12 @@ function(pnacl_finalize target)
     )
 endfunction()
 
+if (NOT ${DEPS_VERSION} EQUAL 5)
+    set(EXC "--pnacl-allow-exceptions")
+endif()
 set(NACL_TRANSLATE_OPTIONS
     --allow-llvm-bitcode-input # FIXME: finalize as part of the build process
+    ${EXC}
     $<$<CONFIG:None>:-O3>
     $<$<CONFIG:Release>:-O3>
     $<$<CONFIG:Debug>:-O0>
