@@ -30,9 +30,7 @@ SPEEX_VERSION=1.2.0
 OPUS_VERSION=1.3.1
 OPUSFILE_VERSION=0.12
 LUA_VERSION=5.4.1
-NACLSDK_VERSION=49.0.2623.87
-NACLPORTS_MAJOR=49
-NACLPORTS_REVISION=trunk-785-g807a23e
+NACLSDK_VERSION=44.0.2403.155
 NCURSES_VERSION=6.0
 
 # Extract an archive into the given subdirectory of the build dir and cd to it
@@ -497,7 +495,7 @@ build_naclsdk() {
 	download "naclsdk_${NACLSDK_PLATFORM}-${NACLSDK_VERSION}.${TAR_EXT}.bz2" "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACLSDK_VERSION}/naclsdk_${NACLSDK_PLATFORM}.tar.bz2" naclsdk
 	cp pepper_*"/tools/sel_ldr_${NACLSDK_ARCH}${EXE}" "${PREFIX}/sel_ldr${EXE}"
 	cp pepper_*"/tools/irt_core_${NACLSDK_ARCH}.nexe" "${PREFIX}/irt_core-${DAEMON_ARCH}.nexe"
-	cp pepper_*"/toolchain/${NACLSDK_PLATFORM}_x86_glibc/bin/x86_64-nacl-gdb${EXE}" "${PREFIX}/nacl-gdb${EXE}"
+	cp pepper_*"/toolchain/${NACLSDK_PLATFORM}_x86_newlib/bin/x86_64-nacl-gdb${EXE}" "${PREFIX}/nacl-gdb${EXE}"
 	rm -rf "${PREFIX}/pnacl"
 	cp -a pepper_*"/toolchain/${NACLSDK_PLATFORM}_pnacl" "${PREFIX}/pnacl"
 	rm -rf "${PREFIX}/pnacl/bin/"{i686,x86_64}-nacl-*
@@ -513,34 +511,21 @@ build_naclsdk() {
 		cp pepper_*"/tools/sel_ldr_x86_64.exe" "${PREFIX}/sel_ldr64.exe"
 		cp pepper_*"/tools/irt_core_x86_64.nexe" "${PREFIX}/irt_core-x86_64.nexe"
 		;;
+	linux32)
+		cp pepper_*"/tools/nacl_helper_bootstrap_x86_32" "${PREFIX}/nacl_helper_bootstrap"
+		;;
 	linux64)
 		cp pepper_*"/tools/nacl_helper_bootstrap_x86_64" "${PREFIX}/nacl_helper_bootstrap"
 		;;
 	esac
 }
 
-download_naclport() {
-    download "naclports-${1}-${NACLPORTS_REVISION}.tar.bz2" "https://gsdview.appspot.com/webports/builds/pepper_${NACLPORTS_MAJOR}/${NACLPORTS_REVISION}/packages/${2}_pnacl.tar.bz2" "naclports-${1}"
-}
 build_naclports() {
-	#download "naclports-${NACLSDK_VERSION}.tar.bz2" "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACLSDK_VERSION}/naclports.tar.bz2" naclports
-    download_naclport freetype "freetype_2.5.5"
-    download_naclport lua "lua_5.3.0"
-    download_naclport png "libpng_1.6.12"
-    # We don't want bz2, but the freetype build has bzip2 enabled.
-    download_naclport bz2 "bzip2_1.0.6"
-    cd "${BUILD_DIR}"
+	download "naclports-${NACLSDK_VERSION}.tar.bz2" "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACLSDK_VERSION}/naclports.tar.bz2" naclports
 	mkdir -p "${PREFIX}/pnacl_deps/"{include,lib}
-	cp naclports-lua/payload/include/{lauxlib.h,lua.h,lua.hpp,luaconf.h,lualib.h} "${PREFIX}/pnacl_deps/include"
-    cp -a naclports-freetype/payload/include/freetype2/ "${PREFIX}/pnacl_deps/include"
-    for LIB in freetype lua png bz2; do
-        cp "naclports-${LIB}/payload/lib/lib${LIB}.a" "${PREFIX}/pnacl_deps/lib/"
-    done
-    
-    # cp naclports-bzip2/payload/lib/libbz2.a "${PREFIX}/pnacl_deps/lib/"
-    # cp naclports-freetype/payload/lib/libfreetype.a "${PREFIX}/pnacl_deps/lib/"
-    # cp naclports-lua/payload/lib/liblua.a "${PREFIX}/pnacl_deps/lib/"
-    # cp naclports-png/payload/lib/libpng.a "${PREFIX}/pnacl_deps/lib/libpng16.a"
+	cp pepper_*"/ports/include/"{lauxlib.h,lua.h,lua.hpp,luaconf.h,lualib.h} "${PREFIX}/pnacl_deps/include"
+	cp -a pepper_*"/ports/include/freetype2" "${PREFIX}/pnacl_deps/include"
+	cp pepper_*"/ports/lib/newlib_pnacl/Release/"{liblua.a,libfreetype.a,libpng16.a} "${PREFIX}/pnacl_deps/lib"
 }
 
 # For MSVC, we need to use the Microsoft LIB tool to generate import libraries,
@@ -752,7 +737,6 @@ fi
 
 # Enable parallel build
 export MAKEFLAGS="-j`nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null || echo 1`"
-export MAKEFLAGS="-j2"
 
 # Setup platform
 PLATFORM="${1}"
