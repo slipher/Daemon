@@ -441,7 +441,7 @@ build_lua() {
 		exit 1
 		;;
 	esac
-	make "${LUA_PLATFORM}" CC="${CC}" AR="${CROSS}ar rcu" RANLIB="${CROSS}ranlib" MYCFLAGS="${CFLAGS:-}" MYLDFLAGS="${LDFLAGS}"
+	make "${LUA_PLATFORM}" CC="${CC:-${CROSS}gcc}" AR="${CROSS}ar rcu" RANLIB="${CROSS}ranlib" MYCFLAGS="${CFLAGS:-}" MYLDFLAGS="${LDFLAGS}"
 	case "${PLATFORM}" in
 	mingw*)
 		make install TO_BIN="lua.exe luac.exe" TO_LIB="liblua.a" INSTALL_TOP="${PREFIX}"
