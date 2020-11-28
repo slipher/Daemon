@@ -40,9 +40,8 @@ build
 
 #ignore external deps
 external_deps/*
-!external_deps/build.sh
+!external_deps/*.sh
 !external_deps/cygtar.py
-!external_deps/wbuild.sh
 
 #never ignore these in subdirectories by accident
 !.gitattributes
