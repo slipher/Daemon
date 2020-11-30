@@ -11,7 +11,7 @@ DEPS_VERSION=5
 
 # Package versions
 PKGCONFIG_VERSION=0.28
-NASM_VERSION=2.11.08
+NASM_VERSION=2.15.05
 ZLIB_VERSION=1.2.11
 GMP_VERSION=6.2.0
 NETTLE_VERSION=3.6
@@ -337,7 +337,7 @@ build_openal() {
 		esac
 		;;
 	macosx*)
-		download "openal-soft-${OPENAL_VERSION}.tar.bz2" "https://kcat.strangesoft.net/openal-releases/openal-soft-${OPENAL_VERSION}.tar.bz2" openal
+		download "openal-soft-${OPENAL_VERSION}.tar.bz2" "https://openal-soft.org/openal-releases/openal-soft-${OPENAL_VERSION}.tar.bz2" openal
 		cd "openal-soft-${OPENAL_VERSION}"
 		cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET}" -DCMAKE_BUILD_TYPE=Release -DALSOFT_EXAMPLES=OFF
 		make
@@ -364,6 +364,9 @@ build_openal() {
 build_ogg() {
 	download "libogg-${OGG_VERSION}.tar.gz" "https://downloads.xiph.org/releases/ogg/libogg-${OGG_VERSION}.tar.gz" ogg
 	cd "libogg-${OGG_VERSION}"
+    # This header breaks the vorbis and opusfile Mac builds
+    cat <(echo '#include <stdint.h>') include/ogg/os_types.h > os_types.tmp
+    mv os_types.tmp include/ogg/os_types.h
 	./configure --host="${HOST}" --prefix="${PREFIX}" ${MSVC_SHARED[@]}
 	make
 	make install
@@ -620,7 +623,7 @@ build_clean() {
 # Common setup code
 common_setup() {
 	WORK_DIR="${PWD}"
-	SCRIPT_DIR=$(realpath "$(dirname "$0")")
+	SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 	DOWNLOAD_DIR="${WORK_DIR}/download_cache"
 	BUILD_DIR="${WORK_DIR}/build-${PLATFORM}-${DEPS_VERSION}"
 	PREFIX="${BUILD_DIR}/prefix"
@@ -695,7 +698,7 @@ setup_macosx64() {
 	HOST=x86_64-apple-darwin11
 	CROSS=
 	MSVC_SHARED=(--disable-shared --enable-static)
-	export MACOSX_DEPLOYMENT_TARGET=10.7
+	export MACOSX_DEPLOYMENT_TARGET=10.9
 	export NASM="${PWD}/build-${PLATFORM}-${DEPS_VERSION}/prefix/bin/nasm" # A newer version of nasm is required for 64-bit
 	export CC=clang
 	export CXX=clang++
