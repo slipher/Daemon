@@ -598,7 +598,7 @@ void GL_VertexAttribsState( uint32_t stateBits )
 
 	if ( glConfig2.vboVertexSkinningAvailable && tess.vboVertexSkinning )
 	{
-		stateBits |= ATTR_BONE_FACTORS;
+		stateBits |= ATTR_BONE_INDICES | ATTR_BONE_WEIGHTS;
 	}
 
 	if ( tess.vboVertexSprite )
@@ -669,7 +669,7 @@ void GL_VertexAttribPointers( uint32_t attribBits )
 
 	if ( glConfig2.vboVertexSkinningAvailable && tess.vboVertexSkinning )
 	{
-		attribBits |= ATTR_BONE_FACTORS;
+		attribBits |= ATTR_BONE_INDICES | ATTR_BONE_WEIGHTS;
 	}
 
 	for ( i = 0; i < ATTR_INDEX_MAX; i++ )

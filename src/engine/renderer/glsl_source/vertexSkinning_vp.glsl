@@ -27,7 +27,8 @@ IN vec3 attr_Position;
 IN vec2 attr_TexCoord0;
 IN vec4 attr_Color;
 IN vec4 attr_QTangent;
-IN vec4 attr_BoneFactors;
+IN vec4 attr_BoneIndices;
+IN vec4 attr_BoneWeights;
 
 // even elements are rotation quat, odd elements are translation + scale (in .w)
 uniform vec4 u_Bones[ 2 * MAX_GLSL_BONES ];
@@ -41,9 +42,8 @@ void VertexFetch(out vec4 position,
 	const float scale = 1.0 / 256.0;
 	localBasis inLB;
 
-	ivec4 idx = 2 * ivec4( floor( attr_BoneFactors * scale ) );
-	vec4  weights = fract( attr_BoneFactors * scale );
-	weights.x = 1.0 - weights.x;
+	ivec4 idx = 2 * ivec4( attr_BoneIndices );
+	vec4  weights = attr_BoneWeights / 255.0;
 
 	vec4 quat = u_Bones[ idx.x ];
 	vec4 trans = u_Bones[ idx.x + 1 ];

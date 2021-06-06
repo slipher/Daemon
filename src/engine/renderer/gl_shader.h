@@ -893,7 +893,7 @@ public:
 
 	uint32_t        GetRequiredVertexAttributes() const
 	{
-		return ATTR_BONE_FACTORS;
+		return ATTR_BONE_INDICES | ATTR_BONE_WEIGHTS;
 	}
 
 	void SetVertexSkinning( bool enable )

@@ -43,7 +43,8 @@ struct fmtSkeletal {
 	i16vec2_t texcoord;
 	Color::Color32Bit colour;
 	i16vec4_t qtangents;
-	u16vec4_t boneFactors;
+	u8vec4_t boneIndex;
+	u8vec4_t boneWeight;
 };
 const GLsizei sizeSkeletal = sizeof( struct fmtSkeletal );
 
@@ -77,7 +78,7 @@ static uint32_t R_DeriveAttrBits( const vboData_t &data )
 
 	if ( data.boneIndexes && data.boneWeights )
 	{
-		stateBits |= ATTR_BONE_FACTORS;
+		stateBits |= ATTR_BONE_INDICES | ATTR_BONE_WEIGHTS;
 	}
 
 	if ( data.spriteOrientation )
@@ -181,13 +182,21 @@ static void R_SetAttributeLayoutsSkeletal( VBO_t *vbo )
 	vbo->attribs[ ATTR_INDEX_QTANGENT ].stride       = sizeSkeletal;
 	vbo->attribs[ ATTR_INDEX_QTANGENT ].frameOffset  = 0;
 
-	vbo->attribs[ ATTR_INDEX_BONE_FACTORS ].numComponents = 4;
-	vbo->attribs[ ATTR_INDEX_BONE_FACTORS ].componentType = GL_UNSIGNED_SHORT;
-	vbo->attribs[ ATTR_INDEX_BONE_FACTORS ].normalize     = GL_FALSE;
-	vbo->attribs[ ATTR_INDEX_BONE_FACTORS ].ofs           = offsetof( struct fmtSkeletal, boneFactors );
-	vbo->attribs[ ATTR_INDEX_BONE_FACTORS ].realStride    = sizeSkeletal;
-	vbo->attribs[ ATTR_INDEX_BONE_FACTORS ].stride        = sizeSkeletal;
-	vbo->attribs[ ATTR_INDEX_BONE_FACTORS ].frameOffset   = 0;
+	vbo->attribs[ ATTR_INDEX_BONE_INDICES ].numComponents = 4;
+	vbo->attribs[ ATTR_INDEX_BONE_INDICES ].componentType = GL_UNSIGNED_BYTE;
+	vbo->attribs[ ATTR_INDEX_BONE_INDICES ].normalize     = GL_FALSE;
+	vbo->attribs[ ATTR_INDEX_BONE_INDICES ].ofs           = offsetof( struct fmtSkeletal, boneIndex );
+	vbo->attribs[ ATTR_INDEX_BONE_INDICES ].realStride    = sizeSkeletal;
+	vbo->attribs[ ATTR_INDEX_BONE_INDICES ].stride        = sizeSkeletal;
+	vbo->attribs[ ATTR_INDEX_BONE_INDICES ].frameOffset   = 0;
+
+	vbo->attribs[ ATTR_INDEX_BONE_WEIGHTS ].numComponents = 4;
+	vbo->attribs[ ATTR_INDEX_BONE_WEIGHTS ].componentType = GL_UNSIGNED_BYTE;
+	vbo->attribs[ ATTR_INDEX_BONE_WEIGHTS ].normalize     = GL_FALSE;
+	vbo->attribs[ ATTR_INDEX_BONE_WEIGHTS ].ofs           = offsetof( struct fmtSkeletal, boneWeight );
+	vbo->attribs[ ATTR_INDEX_BONE_WEIGHTS ].realStride    = sizeSkeletal;
+	vbo->attribs[ ATTR_INDEX_BONE_WEIGHTS ].stride        = sizeSkeletal;
+	vbo->attribs[ ATTR_INDEX_BONE_WEIGHTS ].frameOffset   = 0;
 
 	// total size
 	vbo->vertexesSize = sizeSkeletal * vbo->vertexesNum;
@@ -366,15 +375,13 @@ static void R_CopyVertexData( VBO_t *vbo, byte *outData, vboData_t inData )
 				Vector4Copy( inData.qtangent[ v ], ptr[ v ].qtangents );
 			}
 
-			if ( ( vbo->attribBits & ATTR_BONE_FACTORS ) )
+			if ( ( vbo->attribBits & ATTR_BONE_INDICES ) )
 			{
 				uint32_t j;
 
-				ptr[ v ].boneFactors[ 0 ] = boneFactor( inData.boneIndexes[ v ][ 0 ],
-									1.0f - inData.boneWeights[ v ][ 0 ]);
-				for ( j = 1; j < 4; j++ ) {
-					ptr[ v ].boneFactors[ j ] = boneFactor( inData.boneIndexes[ v ][ j ],
-										inData.boneWeights[ v ][ j ] );
+				for ( j = 0; j < 4; j++ ) {
+					ptr[ v ].boneIndex[ j ] = inData.boneIndexes[ v ][ j ],
+					ptr[ v ].boneWeight[ j ] = 255 * inData.boneWeights[ v ][ j ];
 				}
 			}
 		} else if ( vbo->layout == vboLayout_t::VBO_LAYOUT_STATIC ) {

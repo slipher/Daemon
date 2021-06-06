@@ -653,7 +653,8 @@ static inline void halfToFloat( const f16vec4_t in, vec4_t out )
 		ATTR_INDEX_ORIENTATION,
 
 		// GPU vertex skinning
-		ATTR_INDEX_BONE_FACTORS,
+		ATTR_INDEX_BONE_INDICES,
+		ATTR_INDEX_BONE_WEIGHTS,
 
 		// GPU vertex animations
 		ATTR_INDEX_POSITION2,
@@ -669,7 +670,8 @@ static inline void halfToFloat( const f16vec4_t in, vec4_t out )
 		"attr_QTangent",
 		"attr_Color",
 		"attr_Orientation",
-		"attr_BoneFactors",
+		"attr_BoneIndices",
+		"attr_BoneWeights",
 		"attr_Position2",
 		"attr_QTangent2"
 	};
@@ -682,7 +684,8 @@ static inline void halfToFloat( const f16vec4_t in, vec4_t out )
 	  ATTR_COLOR          = BIT( ATTR_INDEX_COLOR ),
 
 	  ATTR_ORIENTATION    = BIT( ATTR_INDEX_ORIENTATION ),
-	  ATTR_BONE_FACTORS   = BIT( ATTR_INDEX_BONE_FACTORS ),
+	  ATTR_BONE_INDICES   = BIT( ATTR_INDEX_BONE_INDICES ),
+	  ATTR_BONE_WEIGHTS   = BIT( ATTR_INDEX_BONE_WEIGHTS ),
 
 	  // for .md3 interpolation
 	  ATTR_POSITION2      = BIT( ATTR_INDEX_POSITION2 ),
