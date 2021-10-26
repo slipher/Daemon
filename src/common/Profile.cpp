@@ -1,13 +1,10 @@
 #include "Common.h"
 
-#include <Windows.h>
 
 static std::map<std::string, std::vector<int64_t> > tickCounts;
 
 int64_t prof::now() {
-    LARGE_INTEGER count;
-    QueryPerformanceCounter(&count);
-    return count.QuadPart;
+    return Sys::Milliseconds();
 }
 
 prof::~prof() {
@@ -22,10 +19,8 @@ public:
 
     void Run(const Cmd::Args&) const override
     {
-        LARGE_INTEGER frequency;
-        QueryPerformanceFrequency(&frequency);
-        auto toMicros = [frequency](int64_t ticks) {
-            return ticks * 1000 * 1000 / frequency.QuadPart;
+        auto toMicros = [](int64_t ticks) {
+            return ticks * 1000;
         };
         // HACK: Print all lines as one giant log message so that the whole thing can show up in a screenshot
         std::string message;
