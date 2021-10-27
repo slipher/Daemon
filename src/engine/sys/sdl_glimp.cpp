@@ -640,6 +640,8 @@ static bool GLimp_RecreateContextWhenChange( const glConfiguration &configuratio
 	static glConfiguration currentConfiguration = {};
 	static SDL_Window *currentWindow = nullptr; 
 
+	PROFB(RecreateContext)
+
 	if ( glContext == nullptr
 		|| configuration != currentConfiguration
 		|| window != currentWindow )
@@ -1279,6 +1281,7 @@ GLimp_SetMode
 */
 static rserr_t GLimp_SetMode( const int mode, const bool fullscreen, const bool bordered )
 {
+	PROFB(GLimp_SetMode)
 	logger.Notice("Initializing OpenGL display" );
 
 	int GLEWmajor;
