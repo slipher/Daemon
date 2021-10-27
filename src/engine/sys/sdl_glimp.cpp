@@ -749,7 +749,7 @@ static rserr_t GLimp_SetModeAndResolution( const int mode )
 	return rserr_t::RSERR_OK;
 }
 
-static rserr_t GLimp_ValidateBestContext( const bool bordered, const bool fullscreen, const int GLEWmajor, glConfiguration &bestValidatedConfiguration )
+static rserr_t GLimp_ValidateBestContext( const int GLEWmajor, glConfiguration &bestValidatedConfiguration )
 {
 	/* We iterate known 4.x, 3.x, 2.x and 1.x OpenGL versions
 	from highest to lowest, starting with core profile then trying
@@ -830,7 +830,8 @@ static rserr_t GLimp_ValidateBestContext( const bool bordered, const bool fullsc
 				break;
 			}
 
-			if ( !GLimp_RecreateWindowWhenChange( fullscreen, bordered, testConfiguration ) )
+			// Do the testing with borderless window.
+			if ( !GLimp_RecreateWindowWhenChange( false, false, testConfiguration ) )
 			{
 				return rserr_t::RSERR_INVALID_MODE;
 			}
@@ -852,7 +853,8 @@ static rserr_t GLimp_ValidateBestContext( const bool bordered, const bool fullsc
 			testConfiguration.profile = compatibilityProfile;
 			testConfiguration.colorBits = colorBits;
 
-			if ( !GLimp_RecreateWindowWhenChange( fullscreen, bordered, testConfiguration ) )
+			// Do the testing with borderless window.
+			if ( !GLimp_RecreateWindowWhenChange( false, false, testConfiguration ) )
 			{
 				return rserr_t::RSERR_INVALID_MODE;
 			}
@@ -1332,7 +1334,7 @@ static rserr_t GLimp_SetMode( const int mode, const bool fullscreen, const bool 
 	}
 	else
 	{
-		rserr_t err = GLimp_ValidateBestContext( fullscreen, bordered, GLEWmajor, bestValidatedConfiguration );
+		rserr_t err = GLimp_ValidateBestContext( GLEWmajor, bestValidatedConfiguration );
 
 		if ( err == rserr_t::RSERR_OLD_GL )
 		{
