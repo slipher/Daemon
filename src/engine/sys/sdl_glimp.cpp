@@ -496,16 +496,26 @@ static bool GLimp_CreateWindow( bool fullscreen, bool bordered )
 
 	const char *windowType = nullptr;
 
-	// No need to set borderless flag when fullscreen
 	if ( fullscreen )
 	{
 		flags |= SDL_WINDOW_FULLSCREEN;
 		windowType = "fullscreen";
 	}
-	else if ( !bordered )
+
+	/* We need to set borderless flag even when fullscreen
+	because otherwise when disabling fullscreen the window
+	will be bordered while the borderless option is enabled. */
+
+	if ( !bordered )
 	{
 		flags |= SDL_WINDOW_BORDERLESS;
-		windowType = "borderless";
+
+		/* Don't tell fullscreen window is borderless,
+		it's meaningless. */
+		if ( ! fullscreen )
+		{
+			windowType = "borderless";
+		}
 	}
 
 	int x, y;
