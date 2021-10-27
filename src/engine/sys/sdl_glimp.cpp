@@ -697,12 +697,8 @@ static bool GLimp_RecreateWindowWhenChange( const bool fullscreen, const bool bo
 	static int currentColorBits = 0;
 
 	if ( window == nullptr
-		|| fullscreen != currentFullscreen
-		|| bordered != currentBordered
 		|| configuration.colorBits != currentColorBits )
 	{
-		currentFullscreen = fullscreen;
-		currentBordered = bordered;
 		currentColorBits = configuration.colorBits;
 
 		GLimp_DestroyWindowIfExists();
@@ -712,6 +708,43 @@ static bool GLimp_RecreateWindowWhenChange( const bool fullscreen, const bool bo
 			return false;
 		}
 	}
+
+	if ( fullscreen != currentFullscreen )
+	{
+		Uint32 flags = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+		int sdlToggled = SDL_SetWindowFullscreen( window, flags );
+
+		if ( sdlToggled < 0 )
+		{
+			GLimp_DestroyWindowIfExists();
+
+			if ( !GLimp_CreateWindow( fullscreen, bordered ) )
+			{
+				return false;
+			}
+
+			const char* windowType = fullscreen ? "fullscreen" : "windowed";
+			logger.Debug( "SDL window recreated as %s.", windowType );
+		}
+		else
+		{
+			const char* windowType = fullscreen ? "fullscreen" : "windowed";
+			logger.Debug( "SDL window set as %s.", windowType );
+		}
+	}
+
+	if ( bordered != currentBordered )
+	{
+		SDL_bool sdlBordered = bordered ? SDL_TRUE : SDL_FALSE;
+
+		SDL_SetWindowBordered( window, sdlBordered );
+
+		const char* windowType = bordered ? "bordered" : "borderless";
+		logger.Debug( "SDL window set as %s.", windowType );
+	}
+
+	currentFullscreen = fullscreen;
+	currentBordered = bordered;
 
 	return true;
 }
