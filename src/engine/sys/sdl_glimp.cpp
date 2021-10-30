@@ -611,7 +611,7 @@ static const char* GLimp_getProfileName( int profile )
 	return profile == coreProfile ? "core" : "compatibility";
 }
 
-static SDL_GLContext GLimp_CreateContext( const glConfiguration &configuration )
+static SDL_GLContext GLimp_CreateContext( const glConfiguration &configuration, SDL_Window* wnd )
 {
 	int perChannelColorBits = configuration.colorBits == 24 ? 8 : 4;
 
@@ -642,7 +642,7 @@ static SDL_GLContext GLimp_CreateContext( const glConfiguration &configuration )
 		SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
 	}
 
-	return SDL_GL_CreateContext( window );
+	return SDL_GL_CreateContext( wnd );
 }
 
 static bool GLimp_RecreateContextWhenChange( const glConfiguration &configuration )
@@ -658,7 +658,7 @@ static bool GLimp_RecreateContextWhenChange( const glConfiguration &configuratio
 		currentWindow = window;
 
 		GLimp_DestroyContextIfExists();
-		glContext = GLimp_CreateContext( currentConfiguration );
+		glContext = GLimp_CreateContext( currentConfiguration, window );
 
 		const char* CurrentProfileName = GLimp_getProfileName( currentConfiguration.profile );
 
@@ -694,13 +694,9 @@ static bool GLimp_RecreateWindowWhenChange( const bool fullscreen, const bool bo
 {
 	static bool currentFullscreen = false;
 	static bool currentBordered = false;
-	static int currentColorBits = 0;
 
-	if ( window == nullptr
-		|| configuration.colorBits != currentColorBits )
+	if ( window == nullptr )
 	{
-		currentColorBits = configuration.colorBits;
-
 		GLimp_DestroyWindowIfExists();
 
 		if ( !GLimp_CreateWindow( fullscreen, bordered ) )
@@ -792,6 +788,58 @@ static rserr_t GLimp_SetModeAndResolution( const int mode )
 	return rserr_t::RSERR_OK;
 }
 
+const int glSupportArray[][3] = {
+	{ 4, 6, coreProfile },
+	{ 4, 5, coreProfile },
+	{ 4, 4, coreProfile },
+	{ 4, 3, coreProfile },
+	{ 4, 2, coreProfile },
+	{ 4, 1, coreProfile },
+	{ 4, 0, coreProfile },
+	{ 3, 3, coreProfile },
+	{ 3, 2, coreProfile },
+	{ 3, 1, compatibilityProfile },
+	{ 3, 0, compatibilityProfile },
+	{ 2, 1, compatibilityProfile },
+	{ 2, 0, compatibilityProfile },
+	{ 1, 5, compatibilityProfile },
+	{ 1, 4, compatibilityProfile },
+	{ 1, 3, compatibilityProfile },
+	{ 1, 2, compatibilityProfile },
+	{ 1, 1, compatibilityProfile },
+	{ 1, 0, compatibilityProfile },
+	{ 0, 0, undefinedProfile },
+};
+
+glConfiguration GLimp_HighestAvailableVersion() {
+	SDL_Window* tempWindow = SDL_CreateWindow( CLIENT_WINDOW_TITLE, 1, 1, 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN );
+	if ( !tempWindow ) return {};
+	glConfiguration configuration;
+	for (int colorBits : {24, 16} )
+	{
+		configuration.colorBits = colorBits;
+		for (auto& a : glSupportArray)
+		{
+			configuration.major = a[0];
+			configuration.minor = a[1];
+			configuration.profile = a[2];
+			logger.Debug("testing context colorBits=%d GL=%d.%d for availability", configuration.colorBits, configuration.major, configuration.minor);
+			SDL_GLContext tempContext = GLimp_CreateContext(configuration, tempWindow);
+			if (tempContext != nullptr)
+			{
+				if (window && glContext)
+					SDL_GL_MakeCurrent(window, glContext); // restore global context
+				SDL_GL_DeleteContext( tempContext );
+				goto done;
+			}
+		}
+	}
+	configuration = {};
+done:
+	SDL_DestroyWindow( tempWindow );
+	return configuration;
+}
+
 static rserr_t GLimp_ValidateBestContext( const int GLEWmajor, glConfiguration &bestValidatedConfiguration )
 {
 	/* We iterate known 4.x, 3.x, 2.x and 1.x OpenGL versions
@@ -824,29 +872,6 @@ static rserr_t GLimp_ValidateBestContext( const int GLEWmajor, glConfiguration &
 
 	For information about core, compatibility and forward profiles,
 	see https://www.khronos.org/opengl/wiki/OpenGL_Context */
-
-	const int glSupportArray[][3] = {
-		{ 4, 6, coreProfile },
-		{ 4, 5, coreProfile },
-		{ 4, 4, coreProfile },
-		{ 4, 3, coreProfile },
-		{ 4, 2, coreProfile },
-		{ 4, 1, coreProfile },
-		{ 4, 0, coreProfile },
-		{ 3, 3, coreProfile },
-		{ 3, 2, coreProfile },
-		{ 3, 1, compatibilityProfile },
-		{ 3, 0, compatibilityProfile },
-		{ 2, 1, compatibilityProfile },
-		{ 2, 0, compatibilityProfile },
-		{ 1, 5, compatibilityProfile },
-		{ 1, 4, compatibilityProfile },
-		{ 1, 3, compatibilityProfile },
-		{ 1, 2, compatibilityProfile },
-		{ 1, 1, compatibilityProfile },
-		{ 1, 0, compatibilityProfile },
-		{ 0, 0, undefinedProfile },
-	};
 
 	Log::Debug( "Validating best context." );
 

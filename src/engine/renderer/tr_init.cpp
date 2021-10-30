@@ -30,8 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 	float       displayAspect = 0.0f;
 
-	static void GfxInfo_f();
-
 	cvar_t      *r_glMajorVersion;
 	cvar_t      *r_glMinorVersion;
 	cvar_t      *r_glProfile;
@@ -891,12 +889,20 @@ ScreenshotCmd screenshotPNGRegistration("screenshotPNG", ssFormat_t::SSF_PNG, "p
 		}
 	}
 
+typedef struct {
+	int major;
+	int minor;
+	int profile;
+	int colorBits;
+} glConfiguration;
+glConfiguration GLimp_HighestAvailableVersion();
+
 	/*
 	================
 	GfxInfo_f
 	================
 	*/
-	void GfxInfo_f()
+	static void GfxInfo(bool highestGLVersion)
 	{
 		static const char fsstrings[][16] =
 		{
@@ -954,7 +960,16 @@ ScreenshotCmd screenshotPNGRegistration("screenshotPNG", ssFormat_t::SSF_PNG, "p
 				);
 		}
 
-		Log::Notice("Using OpenGL version %d.%d, requested: %d.%d, best: %d.%d", glConfig2.glMajor, glConfig2.glMinor, glConfig2.glRequestedMajor, glConfig2.glRequestedMinor, glConfig2.glBestMajor, glConfig2.glBestMinor );
+		Log::Notice("Using OpenGL version %d.%d, requested: %d.%d", glConfig2.glMajor, glConfig2.glMinor, glConfig2.glRequestedMajor, glConfig2.glRequestedMinor );
+
+		if (highestGLVersion)
+		{
+			glConfiguration highest = GLimp_HighestAvailableVersion();
+			if (highest.major > 0)
+				Log::Notice("Highest available OpenGL version: colorBits=%d GL %d.%d", highest.colorBits, highest.major, highest.minor);
+			else
+				Log::Notice("Everything is broken");
+		}
 
 		if ( glConfig.driverType == glDriverType_t::GLDRV_OPENGL3 )
 		{
@@ -1042,6 +1057,11 @@ ScreenshotCmd screenshotPNGRegistration("screenshotPNG", ssFormat_t::SSF_PNG, "p
 		Log::Debug("ignoreMaterialMinDimension: %d", r_ignoreMaterialMinDimension->integer );
 		Log::Debug("ignoreMaterialMaxDimension: %d", r_ignoreMaterialMaxDimension->integer );
 		Log::Debug("replaceMaterialMinDimensionIfPresentWithMaxDimension: %d", r_replaceMaterialMinDimensionIfPresentWithMaxDimension->integer );
+	}
+
+	void GfxInfo_f()
+	{
+		GfxInfo(true);
 	}
 
 	static void GLSL_restart_f()
@@ -1464,7 +1484,7 @@ ScreenshotCmd screenshotPNGRegistration("screenshotPNG", ssFormat_t::SSF_PNG, "p
 		GL_CheckErrors();
 
 		// print info
-		GfxInfo_f();
+		GfxInfo(false);
 
 		Log::Debug("----- finished R_Init -----" );
 
