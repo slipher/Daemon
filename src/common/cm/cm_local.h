@@ -77,6 +77,7 @@ struct cmodel_t
 
 struct cbrushside_t
 {
+	// TODO: plane and planeNum seem to be redundant information. Remove one?
 	cplane_t  *plane;
 	int       planeNum;
 	int       surfaceFlags;

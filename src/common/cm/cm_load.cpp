@@ -497,6 +497,7 @@ void CMod_LoadBrushSides(const byte *const cmod_base, lump_t *l)
 	{
 		num = LittleLong( in->planeNum );
 		out->plane = &cm.planes[ num ];
+		out->planeNum = num;
 		shaderNum = LittleLong( in->shaderNum );
 
 		if ( shaderNum < 0 || shaderNum >= cm.numShaders )
