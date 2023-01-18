@@ -436,7 +436,7 @@ void R_InitFBOs()
 	R_AttachFBOTexturePackedDepthStencil( tr.currentDepthImage->texnum );
 	R_CheckFBO( tr.mainFBO[1] );
 
-	if ( glConfig2.dynamicLight > 0 )
+	if ( glConfig2.dynamicLight )
 	{
 		/* It's only required to create frame buffers only used by the
 		tiled dynamic lighting renderer when this feature is enabled. */

@@ -2362,23 +2362,18 @@ void R_AddLightInteractions()
 				continue;
 			}
 		} else if ( light->l.inverseShadows ) {
-			if( glConfig2.dynamicLight == 0 ) {
+			if( !glConfig2.dynamicLight ) {
 				light->cull = CULL_OUT;
 				continue;
 			}
 		} else {
-			// Deprecated forward renderer uses r_dynamicLight -1
-			if ( glConfig2.dynamicLight > -1 )
+			if ( glConfig2.dynamicLight )
 			{
-				if( glConfig2.dynamicLight > 0 )
-				{
-					tr.refdef.numShaderLights++;
-					tr.pc.c_dlights++;
-				}
-				light->cull = cullResult_t::CULL_OUT;
-				continue;
-
+				tr.refdef.numShaderLights++;
+				tr.pc.c_dlights++;
 			}
+			light->cull = cullResult_t::CULL_OUT;
+			continue;
 		}
 
 		R_TransformShadowLight( light );
@@ -2562,11 +2557,7 @@ void R_AddLightBoundsToVisBounds()
 		}
 		else
 		{
-			// Deprecated forward renderer uses r_dynamicLight -1
-			if ( glConfig2.dynamicLight > -1 )
-			{
-				continue;
-			}
+			continue;
 		}
 
 		// we must set up parts of tr.or for light culling

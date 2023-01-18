@@ -2789,7 +2789,7 @@ void RB_RenderPostDepthLightTile()
 
 	GLimp_LogComment( "--- RB_RenderPostDepthLightTile ---\n" );
 
-	if ( glConfig2.dynamicLight < 1 )
+	if ( !glConfig2.dynamicLight )
 	{
 		/* Do not run lightTile code when the tiled renderer is not used.
 
@@ -5315,7 +5315,7 @@ RB_SetupLights
 */
 const RenderCommand *SetupLightsCommand::ExecuteSelf( ) const
 {
-	if ( glConfig2.dynamicLight < 1 )
+	if ( !glConfig2.dynamicLight )
 	{
 		/* Do not run lightTile code when the tiled renderer is not used.
 
