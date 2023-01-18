@@ -29,8 +29,6 @@
 #include "fogGlobal_vp.glsl.h"
 #include "fogQuake3_fp.glsl.h"
 #include "fogQuake3_vp.glsl.h"
-#include "forwardLighting_fp.glsl.h"
-#include "forwardLighting_vp.glsl.h"
 #include "fxaa_fp.glsl.h"
 #include "fxaa_vp.glsl.h"
 #include "fxaa3_11_fp.glsl.h"
@@ -83,8 +81,6 @@ std::unordered_map<std::string, std::string> shadermap({
 	{ "glsl/fogGlobal_vp.glsl", std::string(reinterpret_cast<const char*>(fogGlobal_vp_glsl), sizeof(fogGlobal_vp_glsl)) },
 	{ "glsl/fogQuake3_fp.glsl", std::string(reinterpret_cast<const char*>(fogQuake3_fp_glsl), sizeof(fogQuake3_fp_glsl)) },
 	{ "glsl/fogQuake3_vp.glsl", std::string(reinterpret_cast<const char*>(fogQuake3_vp_glsl), sizeof(fogQuake3_vp_glsl)) },
-	{ "glsl/forwardLighting_fp.glsl", std::string(reinterpret_cast<const char*>(forwardLighting_fp_glsl), sizeof(forwardLighting_fp_glsl)) },
-	{ "glsl/forwardLighting_vp.glsl", std::string(reinterpret_cast<const char*>(forwardLighting_vp_glsl), sizeof(forwardLighting_vp_glsl)) },
 	{ "glsl/fxaa3_11_fp.glsl", std::string(reinterpret_cast<const char*>(fxaa3_11_fp_glsl), sizeof(fxaa3_11_fp_glsl)) },
 	{ "glsl/fxaa_fp.glsl", std::string(reinterpret_cast<const char*>(fxaa_fp_glsl), sizeof(fxaa_fp_glsl)) },
 	{ "glsl/fxaa_vp.glsl", std::string(reinterpret_cast<const char*>(fxaa_vp_glsl), sizeof(fxaa_vp_glsl)) },

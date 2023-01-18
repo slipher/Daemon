@@ -164,8 +164,6 @@ set(GLSLSOURCELIST
     ${ENGINE_DIR}/renderer/glsl_source/fogGlobal_vp.glsl
     ${ENGINE_DIR}/renderer/glsl_source/fogQuake3_fp.glsl
     ${ENGINE_DIR}/renderer/glsl_source/fogQuake3_vp.glsl
-    ${ENGINE_DIR}/renderer/glsl_source/forwardLighting_fp.glsl
-    ${ENGINE_DIR}/renderer/glsl_source/forwardLighting_vp.glsl
     ${ENGINE_DIR}/renderer/glsl_source/fxaa_fp.glsl
     ${ENGINE_DIR}/renderer/glsl_source/fxaa_vp.glsl
     ${ENGINE_DIR}/renderer/glsl_source/fxaa3_11_fp.glsl

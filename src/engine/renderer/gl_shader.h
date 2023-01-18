@@ -1374,21 +1374,6 @@ public:
 	}
 };
 
-class u_LightDir :
-	GLUniform3f
-{
-public:
-	u_LightDir( GLShader *shader ) :
-		GLUniform3f( shader, "u_LightDir" )
-	{
-	}
-
-	void SetUniform_LightDir( const vec3_t v )
-	{
-		this->SetValue( v );
-	}
-};
-
 class u_LightOrigin :
 	GLUniform3f
 {
@@ -1399,21 +1384,6 @@ public:
 	}
 
 	void SetUniform_LightOrigin( const vec3_t v )
-	{
-		this->SetValue( v );
-	}
-};
-
-class u_LightColor :
-	GLUniform3f
-{
-public:
-	u_LightColor( GLShader *shader ) :
-		GLUniform3f( shader, "u_LightColor" )
-	{
-	}
-
-	void SetUniform_LightColor( const vec3_t v )
 	{
 		this->SetValue( v );
 	}
@@ -1434,21 +1404,6 @@ public:
 	}
 };
 
-class u_LightScale :
-	GLUniform1f
-{
-public:
-	u_LightScale( GLShader *shader ) :
-		GLUniform1f( shader, "u_LightScale" )
-	{
-	}
-
-	void SetUniform_LightScale( float value )
-	{
-		this->SetValue( value );
-	}
-};
-
 class u_LightWrapAround :
 	GLUniform1f
 {
@@ -1461,96 +1416,6 @@ public:
 	void SetUniform_LightWrapAround( float value )
 	{
 		this->SetValue( value );
-	}
-};
-
-class u_LightAttenuationMatrix :
-	GLUniformMatrix4f
-{
-public:
-	u_LightAttenuationMatrix( GLShader *shader ) :
-		GLUniformMatrix4f( shader, "u_LightAttenuationMatrix" )
-	{
-	}
-
-	void SetUniform_LightAttenuationMatrix( const matrix_t m )
-	{
-		this->SetValue( GL_FALSE, m );
-	}
-};
-
-class u_LightFrustum :
-	GLUniform4fv
-{
-public:
-	u_LightFrustum( GLShader *shader ) :
-		GLUniform4fv( shader, "u_LightFrustum" )
-	{
-	}
-
-	void SetUniform_LightFrustum( vec4_t lightFrustum[ 6 ] )
-	{
-		this->SetValue( 6, lightFrustum );
-	}
-};
-
-class u_ShadowTexelSize :
-	GLUniform1f
-{
-public:
-	u_ShadowTexelSize( GLShader *shader ) :
-		GLUniform1f( shader, "u_ShadowTexelSize" )
-	{
-	}
-
-	void SetUniform_ShadowTexelSize( float value )
-	{
-		this->SetValue( value );
-	}
-};
-
-class u_ShadowBlur :
-	GLUniform1f
-{
-public:
-	u_ShadowBlur( GLShader *shader ) :
-		GLUniform1f( shader, "u_ShadowBlur" )
-	{
-	}
-
-	void SetUniform_ShadowBlur( float value )
-	{
-		this->SetValue( value );
-	}
-};
-
-class u_ShadowMatrix :
-	GLUniformMatrix4fv
-{
-public:
-	u_ShadowMatrix( GLShader *shader ) :
-		GLUniformMatrix4fv( shader, "u_ShadowMatrix" )
-	{
-	}
-
-	void SetUniform_ShadowMatrix( matrix_t m[ MAX_SHADOWMAPS ] )
-	{
-		this->SetValue( MAX_SHADOWMAPS, GL_FALSE, m );
-	}
-};
-
-class u_ShadowParallelSplitDistances :
-	GLUniform4f
-{
-public:
-	u_ShadowParallelSplitDistances( GLShader *shader ) :
-		GLUniform4f( shader, "u_ShadowParallelSplitDistances" )
-	{
-	}
-
-	void SetUniform_ShadowParallelSplitDistances( const vec4_t v )
-	{
-		this->SetValue( v );
 	}
 };
 
@@ -2287,124 +2152,6 @@ public:
 	void SetShaderProgramUniforms( shaderProgram_t *shaderProgram ) override;
 };
 
-class GLShader_forwardLighting_omniXYZ :
-	public GLShader,
-	public u_TextureMatrix,
-	public u_SpecularExponent,
-	public u_AlphaThreshold,
-	public u_ColorModulate,
-	public u_Color,
-	public u_ViewOrigin,
-	public u_LightOrigin,
-	public u_LightColor,
-	public u_LightRadius,
-	public u_LightScale,
-	public u_LightWrapAround,
-	public u_LightAttenuationMatrix,
-	public u_ShadowTexelSize,
-	public u_ShadowBlur,
-	public u_ModelMatrix,
-	public u_ModelViewProjectionMatrix,
-	public u_Bones,
-	public u_VertexInterpolation,
-	public u_ReliefDepthScale,
-	public u_ReliefOffsetBias,
-	public u_NormalScale,
-	public GLDeformStage,
-	public GLCompileMacro_USE_VERTEX_SKINNING,
-	public GLCompileMacro_USE_VERTEX_ANIMATION,
-	public GLCompileMacro_USE_HEIGHTMAP_IN_NORMALMAP,
-	public GLCompileMacro_USE_RELIEF_MAPPING,
-	public GLCompileMacro_USE_SHADOWING //,
-{
-public:
-	GLShader_forwardLighting_omniXYZ( GLShaderManager *manager );
-	void BuildShaderVertexLibNames( std::string& vertexInlines ) override;
-	void BuildShaderFragmentLibNames( std::string& fragmentInlines ) override;
-	void BuildShaderCompileMacros( std::string& compileMacros ) override;
-	void SetShaderProgramUniforms( shaderProgram_t *shaderProgram ) override;
-};
-
-class GLShader_forwardLighting_projXYZ :
-	public GLShader,
-	public u_TextureMatrix,
-	public u_SpecularExponent,
-	public u_AlphaThreshold,
-	public u_ColorModulate,
-	public u_Color,
-	public u_ViewOrigin,
-	public u_LightOrigin,
-	public u_LightColor,
-	public u_LightRadius,
-	public u_LightScale,
-	public u_LightWrapAround,
-	public u_LightAttenuationMatrix,
-	public u_ShadowTexelSize,
-	public u_ShadowBlur,
-	public u_ShadowMatrix,
-	public u_ModelMatrix,
-	public u_ModelViewProjectionMatrix,
-	public u_Bones,
-	public u_VertexInterpolation,
-	public u_ReliefDepthScale,
-	public u_ReliefOffsetBias,
-	public u_NormalScale,
-	public GLDeformStage,
-	public GLCompileMacro_USE_VERTEX_SKINNING,
-	public GLCompileMacro_USE_VERTEX_ANIMATION,
-	public GLCompileMacro_USE_HEIGHTMAP_IN_NORMALMAP,
-	public GLCompileMacro_USE_RELIEF_MAPPING,
-	public GLCompileMacro_USE_SHADOWING //,
-{
-public:
-	GLShader_forwardLighting_projXYZ( GLShaderManager *manager );
-	void BuildShaderVertexLibNames( std::string& vertexInlines ) override;
-	void BuildShaderFragmentLibNames( std::string& fragmentInlines ) override;
-	void BuildShaderCompileMacros( std::string& compileMacros ) override;
-	void SetShaderProgramUniforms( shaderProgram_t *shaderProgram ) override;
-};
-
-class GLShader_forwardLighting_directionalSun :
-	public GLShader,
-	public u_TextureMatrix,
-	public u_SpecularExponent,
-	public u_AlphaThreshold,
-	public u_ColorModulate,
-	public u_Color,
-	public u_ViewOrigin,
-	public u_LightDir,
-	public u_LightColor,
-	public u_LightRadius,
-	public u_LightScale,
-	public u_LightWrapAround,
-	public u_LightAttenuationMatrix,
-	public u_ShadowTexelSize,
-	public u_ShadowBlur,
-	public u_ShadowMatrix,
-	public u_ShadowParallelSplitDistances,
-	public u_ModelMatrix,
-	public u_ViewMatrix,
-	public u_ModelViewProjectionMatrix,
-	public u_Bones,
-	public u_VertexInterpolation,
-	public u_ReliefDepthScale,
-	public u_ReliefOffsetBias,
-	public u_NormalScale,
-	public GLDeformStage,
-	public GLCompileMacro_USE_VERTEX_SKINNING,
-	public GLCompileMacro_USE_VERTEX_ANIMATION,
-	public GLCompileMacro_USE_HEIGHTMAP_IN_NORMALMAP,
-	public GLCompileMacro_USE_RELIEF_MAPPING,
-	public GLCompileMacro_USE_SHADOWING //,
-{
-public:
-	GLShader_forwardLighting_directionalSun( GLShaderManager *manager );
-	void BuildShaderVertexLibNames( std::string& vertexInlines ) override;
-	void BuildShaderFragmentLibNames( std::string& fragmentInlines ) override;
-	void BuildShaderCompileMacros( std::string& compileMacros ) override;
-	void SetShaderProgramUniforms( shaderProgram_t *shaderProgram ) override;
-};
-
 class GLShader_shadowFill :
 	public GLShader,
 	public u_TextureMatrix,
@@ -2694,9 +2441,6 @@ extern ShaderKind shaderKind;
 extern GLShader_generic2D                       *gl_generic2DShader;
 extern GLShader_generic                         *gl_genericShader;
 extern GLShader_lightMapping                    *gl_lightMappingShader;
-extern GLShader_forwardLighting_omniXYZ         *gl_forwardLightingShader_omniXYZ;
-extern GLShader_forwardLighting_projXYZ         *gl_forwardLightingShader_projXYZ;
-extern GLShader_forwardLighting_directionalSun *gl_forwardLightingShader_directionalSun;
 extern GLShader_shadowFill                      *gl_shadowFillShader;
 extern GLShader_reflection                      *gl_reflectionShader;
 extern GLShader_skybox                          *gl_skyboxShader;
