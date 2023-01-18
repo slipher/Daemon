@@ -2483,7 +2483,7 @@ static void R_CreateCurrentRenderImage()
 
 static void R_CreateDepthRenderImage()
 {
-	if ( glConfig2.dynamicLight < 1 )
+	if ( !glConfig2.dynamicLight )
 	{
 		/* Do not create lightTile images when the tiled renderer is not used.
 

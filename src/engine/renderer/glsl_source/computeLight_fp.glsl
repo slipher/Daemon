@@ -63,9 +63,11 @@ void ReadLightGrid(in vec4 texel, out vec3 ambientColor, out vec3 lightColor) {
 	lightColor = directedScale * texel.rgb;
 }
 
-void computeLight( vec3 lightDir, vec3 normal, vec3 viewDir, vec3 lightColor,
+#define computeLight(a,b,c,d,e,f,g) computeLightx(a,b,c,d,e,f,g,0)
+
+void computeLightx( vec3 lightDir, vec3 normal, vec3 viewDir, vec3 lightColor,
 		   vec4 diffuseColor, vec4 materialColor,
-		   inout vec4 color ) {
+		   inout vec4 color, float isDyn ) {
   vec3 H = normalize( lightDir + viewDir );
 
 #if defined(USE_PHYSICAL_MAPPING) || defined(r_specularMapping)
@@ -130,10 +132,37 @@ void computeLight( vec3 lightDir, vec3 normal, vec3 viewDir, vec3 lightColor,
 #endif // USE_REFLECTIVE_SPECULAR
 
   color.rgb += lightColor.rgb * NdotL * diffuseColor.rgb;
+  
+
+  /*
+  if (!(dot(lightColor.rgb, lightColor.rgb) > 0 && dot(lightColor.rgb, lightColor.rgb) < 1.3)) {
+    color.rgb = vec3(1, 0, 0);
+  }
+  */
+
+
+  if (!(dot(diffuseColor.rgb, diffuseColor.rgb) > 0 && dot(diffuseColor.rgb, diffuseColor.rgb) < 1.3)) {
+    color.rgb = vec3(0, 0, 1);
+  }
+  
+
+  if (!(NdotL >= 0 && NdotL <= 1)) {
+    color.rgb = vec3(0, 1, 0);
+  }
+
+  if (!(dot(normal, normal) > 0.9 && dot(normal, normal) < 1.1)) {
+    color.rgb = vec3(1, 0, 0);
+    }
+
+  if (!(dot(lightDir, lightDir) > 0.9 && dot(lightDir, lightDir) < 1.1)) {
+    color.rgb = vec3(0, 1, 0);
+  }
+
 #if defined(r_specularMapping)
   // The minimal specular exponent should preferably be nonzero to avoid the undefined pow(0, 0)
   color.rgb += lightColor.rgb * materialColor.rgb * pow( NdotH, u_SpecularExponent.x * materialColor.a + u_SpecularExponent.y) * r_SpecularScale;
 #endif // r_specularMapping
+
 #endif // !USE_PHYSICAL_MAPPING
 }
 
@@ -179,6 +208,17 @@ void computeDLight( int idx, vec3 P, vec3 normal, vec3 viewDir, vec4 diffuse,
     L = center_radius.xyz - P;
     attenuation = 1.0 / (1.0 + 8.0 * length(L) / center_radius.w);
     L = normalize(L);
+    /*if (!(dot(L, L) > 0.9) || !(dot(L, L) < 1.1) || !(attenuation > 0) || !(attenuation < 1)  ) {
+        color_type.xyz = vec3(0.5, 0.5, 0);
+    }*/
+
+    float colorlen = dot(color_type.xyz, color_type.xyz);
+    if (!(colorlen >= 0 && colorlen < 1.3)) {
+        color_type.xyz = vec3(0, 1, 0);
+    }
+    if(colorlen >= 3)
+        color_type.xyz = vec3(0, 0, 1);
+
   } else if( color_type.w == 1.0 ) {
     // spot light
     vec4 direction_angle = GetLight( idx, direction_angle );
@@ -194,9 +234,9 @@ void computeDLight( int idx, vec3 P, vec3 normal, vec3 viewDir, vec4 diffuse,
     L = GetLight( idx, direction_angle ).xyz;
     attenuation = 1.0;
   }
-  computeLight( L, normal, viewDir,
+  computeLightx( L, normal, viewDir,
 		attenuation * attenuation * color_type.xyz,
-		diffuse, material, color );
+		diffuse, material, color, 1 );
 }
 
 void computeDLights( vec3 P, vec3 normal, vec3 viewDir, vec4 diffuse, vec4 material,

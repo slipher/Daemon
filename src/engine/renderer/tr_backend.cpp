@@ -5352,6 +5352,7 @@ const RenderCommand *SetupLightsCommand::ExecuteSelf( ) const
 			VectorCopy( light->l.origin, buffer[i].center );
 			buffer[i].radius = light->l.radius;
 			VectorScale( light->l.color, 4.0f * light->l.scale, buffer[i].color );
+			Log::defaultLogger.WithoutSuppression().Notice("light scale=%f color(%.02f %.02f %.02f)", light->l.scale, buffer[i].color[0], buffer[i].color[1], buffer[i].color[2]);
 			buffer[i].type = Util::ordinal( light->l.rlType );
 			switch( light->l.rlType ) {
 			case refLightType_t::RL_PROJ:

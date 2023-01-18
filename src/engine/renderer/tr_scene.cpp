@@ -412,6 +412,9 @@ void RE_AddDynamicLightToSceneET( const vec3_t org, float radius, float intensit
 		return;
 	}
 
+	Log::defaultLogger.WithoutSuppression().Notice("addlight at (%.0f %.0f %.0f) r=%.2g intensity=%.2g color(%.2g %.2g %.2g) flags=0x%x",
+		org[0], org[1], org[2], radius, intensity, r, g, b, flags);
+
 	light = &backEndData[ tr.smpFrame ]->lights[ r_numLights++ ];
 
 	light->l.rlType = refLightType_t::RL_OMNI;
@@ -428,6 +431,12 @@ void RE_AddDynamicLightToSceneET( const vec3_t org, float radius, float intensit
 	light->l.color[ 0 ] = r;
 	light->l.color[ 1 ] = g;
 	light->l.color[ 2 ] = b;
+
+#if 0
+	float len = VectorLength(light->l.color);
+	Log::Notice("orig length=%f", len);
+	for (float& c : light->l.color) c /= len;
+#endif
 
 	light->l.inverseShadows = (flags & REF_INVERSE_DLIGHT) != 0;
 	light->l.noShadows = !r_dynamicLightCastShadows->integer && !light->l.inverseShadows;
