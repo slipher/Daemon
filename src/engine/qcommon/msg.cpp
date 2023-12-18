@@ -301,20 +301,7 @@ int MSG_ReadBits( msg_t *msg, int bits )
 // writing functions
 //
 
-void MSG_WriteChar( msg_t *sb, int c )
-{
-#ifdef PARANOID
-
-	if ( c < -128 || c > 127 )
-	{
-		Sys::Error( "MSG_WriteChar: range error" );
-	}
-
-#endif
-
-	MSG_WriteBits( sb, c, 8 );
-}
-
+// uint8_t
 void MSG_WriteByte( msg_t *sb, int c )
 {
 #ifdef PARANOID
@@ -339,11 +326,12 @@ void MSG_WriteData( msg_t *buf, const void *data, int length )
 	}
 }
 
+// uint16_t
 void MSG_WriteShort( msg_t *sb, int c )
 {
 #ifdef PARANOID
 
-	if ( c < ( ( short ) 0x8000 ) || c > ( short ) 0x7fff )
+	if ( c < 0 || c > 0xffff )
 	{
 		Sys::Error( "MSG_WriteShort: range error" );
 	}
@@ -353,21 +341,10 @@ void MSG_WriteShort( msg_t *sb, int c )
 	MSG_WriteBits( sb, c, 16 );
 }
 
+// int32_t
 void MSG_WriteLong( msg_t *sb, int c )
 {
 	MSG_WriteBits( sb, c, 32 );
-}
-
-void MSG_WriteFloat( msg_t *sb, float f )
-{
-	union
-	{
-		float f;
-		int   l;
-	} dat;
-
-	dat.f = f;
-	MSG_WriteBits( sb, dat.l, 32 );
 }
 
 void MSG_WriteString( msg_t *sb, const char *s )
@@ -428,11 +405,10 @@ void MSG_WriteBigString( msg_t *sb, const char *s )
 // reading functions
 //
 
+// uint8_t
 int MSG_ReadByte( msg_t *msg )
 {
-	int c;
-
-	c = ( unsigned char ) MSG_ReadBits( msg, 8 );
+	int c = MSG_ReadBits( msg, 8 );
 
 	if ( msg->readcount > msg->cursize )
 	{
@@ -442,6 +418,7 @@ int MSG_ReadByte( msg_t *msg )
 	return c;
 }
 
+// uint16_t
 int MSG_ReadShort( msg_t *msg )
 {
 	int c;
@@ -456,6 +433,7 @@ int MSG_ReadShort( msg_t *msg )
 	return c;
 }
 
+// int32_t
 int MSG_ReadLong( msg_t *msg )
 {
 	int c;
@@ -468,25 +446,6 @@ int MSG_ReadLong( msg_t *msg )
 	}
 
 	return c;
-}
-
-float MSG_ReadFloat( msg_t *msg )
-{
-	union
-	{
-		byte  b[ 4 ];
-		float f;
-		int   l;
-	} dat;
-
-	dat.l = MSG_ReadBits( msg, 32 );
-
-	if ( msg->readcount > msg->cursize )
-	{
-		dat.f = -1;
-	}
-
-	return dat.f;
 }
 
 char           *MSG_ReadString( msg_t *msg )
