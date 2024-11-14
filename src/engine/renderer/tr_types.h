@@ -72,9 +72,9 @@ using bool8_t = uint8_t;
 #define RF_SWAPCULL      0x000800 // swap CT_FRONT_SIDED and CT_BACK_SIDED
 
 // refdef flags
-#define RDF_NOWORLDMODEL ( 1 << 0 ) // used for player configuration screen
+#define RDF_NOWORLDMODEL ( 1 << 0 ) // don't render world or entities
 #define RDF_NOSHADOWS    ( 1 << 1 ) // force renderer to use faster lighting only path
-#define RDF_HYPERSPACE   ( 1 << 2 ) // teleportation effect
+#define RDF_HYPERSPACE   ( 1 << 2 ) // teleportation effect. implies RDF_NOWORLDMODEL
 
 // Rafael
 #define RDF_SKYBOXPORTAL ( 1 << 3 )

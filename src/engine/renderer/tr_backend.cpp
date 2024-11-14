@@ -754,18 +754,10 @@ A player has predicted a teleport, but hasn't arrived yet
 */
 static void RB_Hyperspace()
 {
-	float c;
-
-	if ( !backEnd.isHyperspace )
-	{
-		// do initialization shit
-	}
-
-	c = ( backEnd.refdef.time & 255 ) / 255.0f;
+	R_BindNullFBO(); // Render directly to the framebuffer, bypassing cameraEffects
+	float c = ( backEnd.refdef.time & 255 ) / 255.0f;
 	GL_ClearColor( c, c, c, 1 );
 	glClear( GL_COLOR_BUFFER_BIT );
-
-	backEnd.isHyperspace = true;
 }
 
 static void SetViewportAndScissor()
@@ -4639,6 +4631,14 @@ static void RB_RenderView( bool depthPass )
 
 	backEnd.pc.c_surfaces += backEnd.viewParms.numDrawSurfs;
 
+	if ( backEnd.refdef.rdflags & RDF_HYPERSPACE )
+	{
+		RB_Hyperspace();
+
+		return;
+		// todo r_speeds...
+	}
+
 	// disable offscreen rendering
 	R_BindFBO( tr.mainFBO[ backEnd.currentMainFBO ] );
 
@@ -4651,17 +4651,6 @@ static void RB_RenderView( bool depthPass )
 
 	// ensures that depth writes are enabled for the depth clear
 	GL_State( GLS_DEFAULT );
-
-	if ( ( backEnd.refdef.rdflags & RDF_HYPERSPACE ) )
-	{
-		RB_Hyperspace();
-
-		return;
-	}
-	else
-	{
-		backEnd.isHyperspace = false;
-	}
 
 	// we will only draw a sun if there was sky rendered in this view
 	backEnd.skyRenderedThisView = false;
