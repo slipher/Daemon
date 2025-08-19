@@ -6,3 +6,6 @@ GAMEMODULE(NAME cgame
     FILES
         src/dummygame/cgame.cpp
 )
+
+
+message("dummygame CMAKE_CXX_FLAGS is... ${CMAKE_CXX_FLAGS}")

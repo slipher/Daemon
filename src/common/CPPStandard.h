@@ -87,6 +87,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 so we set a custom macro in build system */
 #if __cpp_lib_stacktrace >= 202011L || defined(DAEMON_CPP23_SUPPORT_LIBRARY_ENABLED)
     #define CPP_STACKTRACE
+#else
+#error
 #endif
 
 #endif // CPPSTANDARD_H

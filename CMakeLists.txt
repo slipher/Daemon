@@ -1095,6 +1095,9 @@ if (DEPS_DIR AND (BUILD_CLIENT OR BUILD_TTY_CLIENT OR BUILD_SERVER OR BUILD_DUMM
     endif()
 endif()
 
+message("daemon CMAKE_CXX_FLAGS is... ${CMAKE_CXX_FLAGS}")
+
+
 if (BUILD_DUMMY_GAMELOGIC)
     include(src/dummygame/CMakeLists.txt)
 endif()
