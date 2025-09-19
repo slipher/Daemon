@@ -3365,6 +3365,26 @@ static void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump )
 	Log::Debug("%i fog volumes loaded", s_worldData.numFogs );
 }
 
+class ListFogsCmd : public Cmd::StaticCmd
+{
+public:
+	ListFogsCmd() : StaticCmd("listFogs", 0, "list fogs") {}
+
+	void Run( const Cmd::Args & ) const override
+	{
+		for ( int i = 1; i < tr.world->numFogs; i++ )
+		{
+			const fog_t &fog = tr.world->fogs[ i ];
+			Print( "mins (%.0f %.0f %.0f) maxs (%.0f %.0f %.0f) tcScale %.3g plane (%.0f %.0f %.0f) %.0f",
+			       fog.bounds[ 0 ][ 0 ], fog.bounds[ 0 ][ 1 ], fog.bounds[ 0 ][ 2 ],
+			       fog.bounds[ 1 ][ 0 ], fog.bounds[ 1 ][ 1 ], fog.bounds[ 1 ][ 2 ],
+			       fog.tcScale,
+			       fog.surface[ 0 ], fog.surface[ 1 ], fog.surface[ 2 ], fog.surface[ 3 ] );
+		}
+	}
+};
+static ListFogsCmd listFogsCmdRegistration;
+
 static void R_SetConstantColorLightGrid( const byte color[3] )
 {
 	world_t *w = &s_worldData;
