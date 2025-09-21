@@ -883,7 +883,6 @@ ScreenshotCmd screenshotPNGRegistration("screenshotPNG", ssFormat_t::SSF_PNG, "p
 		GL_ClearStencil( 0 );
 
 		GL_DrawBuffer( GL_BACK );
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
 		GL_CheckErrors();
 

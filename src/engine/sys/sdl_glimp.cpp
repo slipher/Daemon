@@ -1446,7 +1446,10 @@ static void GLimp_DrawWindow()
 	// Fill window with a dark grey (#141414) background.
 	glClearColor( 0.08f, 0.08f, 0.08f, 1.0f );
 	glClear( GL_COLOR_BUFFER_BIT );
-	GLimp_EndFrame();
+
+	// Other buffer too
+	SDL_GL_SwapWindow( window );
+	glClear( GL_COLOR_BUFFER_BIT );
 }
 
 static rserr_t GLimp_CheckOpenGLVersion( const glConfiguration &requestedConfiguration )
