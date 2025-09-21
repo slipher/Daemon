@@ -1659,10 +1659,6 @@ static rserr_t GLimp_SetMode( const int mode, const bool fullscreen, const bool 
 		return rserr_t::RSERR_RESTART;
 	}
 
-	ApplyWindowCvars( true );
-
-	GLimp_DrawWindow();
-
 	{
 		rserr_t err = GLimp_CheckOpenGLVersion( requestedConfiguration );
 
@@ -1676,6 +1672,10 @@ static rserr_t GLimp_SetMode( const int mode, const bool fullscreen, const bool 
 	in case of error. */
 
 	GLimp_CheckGLEW( requestedConfiguration );
+
+	ApplyWindowCvars( true );
+
+	GLimp_DrawWindow();
 
 	/* When calling GLimp_CreateContext() some drivers may provide a valid
 	context that is unusable while GL_CheckErrors() catches nothing.
