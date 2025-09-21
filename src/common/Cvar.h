@@ -195,6 +195,7 @@ namespace Cvar {
             OnValueChangedResult OnValueChanged(Str::StringRef newValue) override;
 
             Util::optional<value_type> GetModifiedValue();
+            void MarkModified(bool flag = true) { modified = flag; }
 
         private:
             bool modified;

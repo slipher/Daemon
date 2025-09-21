@@ -186,6 +186,8 @@ static Cvar::Cvar<bool> workaround_glHardware_intel_useFirstProvokinVertex(
 	"Use first provoking vertex on Intel hardware supporting ARB_provoking_vertex",
 	Cvar::NONE, true );
 
+static void ApplyWindowCvars( bool force );
+
 SDL_Window *window = nullptr;
 static SDL_PropertiesID windowProperties;
 static SDL_GLContext glContext = nullptr;
@@ -960,8 +962,9 @@ static bool GLimp_RecreateWindowWhenChange( const bool fullscreen, const bool bo
 {
 	/* Those values doen't contribute to anything
 	when the window isn't created yet. */
+	// Although fullscreen mode may be changed at any time, the usage pattern of this function is to
+	// only call it right after a new window was created.
 	static bool currentFullscreen = false;
-	static bool currentBordered = false;
 	static int currentWidth = 0;
 	static int currentHeight = 0;
 	static glConfiguration currentConfiguration = {};
@@ -974,6 +977,7 @@ static bool GLimp_RecreateWindowWhenChange( const bool fullscreen, const bool bo
 		|| windowConfig.vidHeight != currentHeight
 		|| configuration != currentConfiguration )
 	{
+		currentFullscreen = fullscreen;
 		currentWidth = windowConfig.vidWidth;
 		currentHeight = windowConfig.vidHeight;
 		currentConfiguration = configuration;
@@ -1006,17 +1010,6 @@ static bool GLimp_RecreateWindowWhenChange( const bool fullscreen, const bool bo
 			logger.Debug( "SDL window set as %s.", windowType );
 		}
 	}
-
-	if ( bordered != currentBordered )
-	{
-		SDL_SetWindowBordered( window, bordered );
-
-		const char* windowType = bordered ? "bordered" : "borderless";
-		logger.Debug( "SDL window set as %s.", windowType );
-	}
-
-	currentFullscreen = fullscreen;
-	currentBordered = bordered;
 
 	return true;
 }
@@ -1332,9 +1325,6 @@ static void GLimp_RegisterConfiguration( const glConfiguration& highestConfigura
 
 	glConfig.glRequestedMajor = requestedConfiguration.major;
 	glConfig.glRequestedMinor = requestedConfiguration.minor;
-
-	SetSwapInterval( r_swapInterval.Get() );
-	r_swapInterval.GetModifiedValue(); // clear modified flag
 
 	{
 		/* Make sure we don't silence any useful error that would
@@ -1668,6 +1658,8 @@ static rserr_t GLimp_SetMode( const int mode, const bool fullscreen, const bool 
 		GLimp_DestroyWindowIfExists();
 		return rserr_t::RSERR_RESTART;
 	}
+
+	ApplyWindowCvars( true );
 
 	GLimp_DrawWindow();
 
@@ -2904,11 +2896,6 @@ should only be called by the main thread.
 */
 void GLimp_HandleCvars()
 {
-	if ( Util::optional<int> swapInterval = r_swapInterval.GetModifiedValue() )
-	{
-		SetSwapInterval( *swapInterval );
-	}
-
 	if ( Util::optional<bool> wantFullscreen = r_fullscreen.GetModifiedValue() )
 	{
 		bool needToToggle = true;
@@ -2924,14 +2911,38 @@ void GLimp_HandleCvars()
 				Log::Warn( "SDL_SetWindowFullscreen failed: %s", SDL_GetError() );
 				Log::Warn( "Trying vid_restart" );
 				Cmd::BufferCommandText("vid_restart");
+				return;
 			}
 		}
 	}
 
+	ApplyWindowCvars( false );
+}
+
+void ApplyWindowCvars( bool force )
+{
+	if ( force )
+	{
+		r_noBorder.MarkModified();
+		r_swapInterval.MarkModified();
+	}
+
 	if ( Util::optional<bool> noBorder = r_noBorder.GetModifiedValue() )
 	{
-		bool bordered = !*noBorder;
-		SDL_SetWindowBordered( window, bordered );
+		bool haveBorder = !( SDL_GetWindowFlags( window ) & SDL_WINDOW_BORDERLESS );
+		bool wantBorder = !*noBorder;
+
+		if ( haveBorder != wantBorder )
+		{
+			SDL_SetWindowBordered( window, wantBorder );
+			const char *windowType = wantBorder ? "bordered" : "borderless";
+			logger.Debug( "SDL window set as %s", windowType );
+		}
+	}
+
+	if ( Util::optional<int> swapInterval = r_swapInterval.GetModifiedValue() )
+	{
+		SetSwapInterval( *swapInterval );
 	}
 
 	// TODO: Update r_allowResize using SDL_SetWindowResizable when we have SDL 2.0.5
