@@ -621,8 +621,10 @@ void CL_InitCGame()
 	mapname = Info_ValueForKey( info, "mapname" );
 	Com_sprintf( cl.mapname, sizeof( cl.mapname ), "maps/%s.bsp", mapname );
 
-
 	cls.state = connstate_t::CA_LOADING;
+
+	// Cause any input while loading to be dropped
+	IN_DropInputsForFrame();
 
 	// init for this gamestate
 	cgvm.CGameInit(clc.serverMessageSequence, clc.clientNum);
@@ -639,8 +641,10 @@ void CL_InitCGame()
 	// on the card even if the driver does deferred loading
 	re.EndRegistration();
 
-	// Cause any input while loading to be dropped and forget what's pressed
-	IN_DropInputsForFrame();
+	IN_Frame(); // flush input queue
+	IN_FrameEnd(); // stop dropping input
+
+	// forget what's pressed
 	CL_ClearKeys();
 	Key_ClearStates();
 }
