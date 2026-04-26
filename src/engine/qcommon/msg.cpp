@@ -304,14 +304,11 @@ int MSG_ReadBits( msg_t *msg, int bits )
 // uint8_t
 void MSG_WriteByte( msg_t *sb, int c )
 {
-#ifdef PARANOID
-
 	if ( c < 0 || c > 255 )
 	{
-		Sys::Error( "MSG_WriteByte: range error" );
+		Log::Warn( "MSG_WriteByte: value %d out of range", c );
 	}
 
-#endif
 
 	MSG_WriteBits( sb, c, 8 );
 }
@@ -329,14 +326,10 @@ void MSG_WriteData( msg_t *buf, const void *data, int length )
 // uint16_t
 void MSG_WriteShort( msg_t *sb, int c )
 {
-#ifdef PARANOID
-
 	if ( c < 0 || c > 0xffff )
 	{
-		Sys::Error( "MSG_WriteShort: range error" );
+		Log::Warn( "MSG_WriteShort: value %d out of range", c );
 	}
-
-#endif
 
 	MSG_WriteBits( sb, c, 16 );
 }
@@ -362,7 +355,7 @@ void MSG_WriteString( msg_t *sb, const char *s )
 
 		if ( l >= MAX_STRING_CHARS )
 		{
-			Log::Notice( "MSG_WriteString: MAX_STRING_CHARS exceeded" );
+			Log::Warn( "MSG_WriteString: MAX_STRING_CHARS exceeded" );
 			MSG_WriteData( sb, "", 1 );
 			return;
 		}
@@ -388,7 +381,7 @@ void MSG_WriteBigString( msg_t *sb, const char *s )
 
 		if ( l >= BIG_INFO_STRING )
 		{
-			Log::Notice( "MSG_WriteBigString: BIG_INFO_STRING exceeded" );
+			Log::Warn( "MSG_WriteBigString: BIG_INFO_STRING exceeded" );
 			MSG_WriteData( sb, "", 1 );
 			return;
 		}
@@ -618,7 +611,7 @@ void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *to )
 	if ( to->serverTime - from->serverTime < 256 )
 	{
 		MSG_WriteBits( msg, 1, 1 );
-		MSG_WriteBits( msg, to->serverTime - from->serverTime, 8 );
+		MSG_WriteByte( msg, to->serverTime - from->serverTime );
 	}
 	else
 	{
@@ -668,7 +661,7 @@ void MSG_ReadDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *to )
 
 	if ( MSG_ReadBits( msg, 1 ) )
 	{
-		to->serverTime = from->serverTime + MSG_ReadBits( msg, 8 );
+		to->serverTime = from->serverTime + MSG_ReadByte( msg );
 	}
 	else
 	{
@@ -847,7 +840,7 @@ If force is not set, then nothing at all will be generated if the entity is
 identical, under the assumption that the in-order delta code will catch it.
 ==================
 */
-void MSG_WriteDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, bool force )
+void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entityState_t *to, bool force )
 {
 	int        i, lc;
 	netField_t *field;
@@ -923,8 +916,6 @@ void MSG_WriteDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, b
 
 	MSG_WriteByte( msg, lc );  // # of changes
 
-//  Log::Notice( "Delta for ent %i: ", to->number );
-
 	for ( i = 0, field = entityStateFields; i < lc; i++, field++ )
 	{
 		fromF = ( int * )( ( byte * ) from + field->offset );
@@ -957,18 +948,12 @@ void MSG_WriteDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, b
 					// send as small integer
 					MSG_WriteBits( msg, 0, 1 );
 					MSG_WriteBits( msg, trunc + FLOAT_INT_BIAS, FLOAT_INT_BITS );
-//                  if ( print ) {
-//                      Log::Notice( "%s:%i ", field->name, trunc );
-//                  }
 				}
 				else
 				{
 					// send as full floating point value
 					MSG_WriteBits( msg, 1, 1 );
 					MSG_WriteBits( msg, *toF, 32 );
-//                  if ( print ) {
-//                      Log::Notice( "%s:%f ", field->name, *(float *)toF );
-//                  }
 				}
 			}
 		}
@@ -983,27 +968,9 @@ void MSG_WriteDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, b
 				MSG_WriteBits( msg, 1, 1 );
 				// integer
 				MSG_WriteBits( msg, *toF, field->bits );
-//              if ( print ) {
-//                  Log::Notice( "%s:%i ", field->name, *toF );
-//              }
 			}
 		}
 	}
-
-//  Log::Notice( "" );
-
-	/*
-	        c = msg->cursize - c;
-
-	        if ( print ) {
-	                if ( msg->bit == 0 ) {
-	                        endBit = msg->cursize * 8 - GENTITYNUM_BITS;
-	                } else {
-	                        endBit = ( msg->cursize - 1 ) * 8 + msg->bit - GENTITYNUM_BITS;
-	                }
-	                Log::Notice( " (%i bits)", endBit - startBit  );
-	        }
-	*/
 }
 
 /*
