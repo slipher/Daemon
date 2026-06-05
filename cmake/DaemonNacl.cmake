@@ -31,7 +31,6 @@ option(USE_NACL_SAIGO "Use Saigo toolchain to build NaCl executables" OFF)
 if (YOKAI_SYSTEM_NaCl)
   # Build nexe binary.
   if(USE_NACL_SAIGO)
-    # YOKAI_NACL_ARCH_NAME is "pnacl" here, NACL_TARGET carries the architecture.
     if (NACL_TARGET STREQUAL "amd64")
       add_definitions(-DNACL_BUILD_ARCH=x86)
       add_definitions(-DNACL_BUILD_SUBARCH=64)
@@ -47,7 +46,6 @@ if (YOKAI_SYSTEM_NaCl)
     # Those defines looks to be meaningless to produce arch-independent pexe
     # with PNaCl but they must be set to anything supported by native builds.
     # This requirement looks to be a PNaCl bug.
-    # YOKAI_NACL_ARCH_NAME is "pnacl" here, NACL_TARGET is not set.
     add_definitions( -DNACL_BUILD_ARCH=x86 )
     add_definitions( -DNACL_BUILD_SUBARCH=64 )
   endif()
