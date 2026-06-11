@@ -1068,6 +1068,15 @@ SOCKET NET_IP6Socket( const char *net_interface, int port, struct sockaddr_in6 *
 	}
 #endif
 
+#if defined(BUILD_GRAPHICAL_CLIENT) || defined(BUILD_TTY_CLIENT)
+	// set multicast *sending* interface
+	if ( !( net_enabled->integer & NET_DISABLEMCAST ) && SOCKET_ERROR == setsockopt(
+	    newsocket, IPPROTO_IPV6, IPV6_MULTICAST_IF, reinterpret_cast<const char *>( &curgroup.ipv6mr_interface ), sizeof( curgroup.ipv6mr_interface ) ) )
+	{
+		Log::Warn( "NET_IP6Socket: setsockopt IPV6_MULTICAST_IF: %s", NET_ErrorString() );
+	}
+#endif
+
 	if ( !net_interface || !net_interface[ 0 ] )
 	{
 		memset( &address, 0, sizeof( address ) );
@@ -1737,8 +1746,8 @@ void NET_EnableNetworking( bool serverMode )
 
 	networkingEnabled = true;
 
+	NET_SetMulticast6(); // just parses cvars
 	NET_OpenIP( serverMode );
-	NET_SetMulticast6();
 	SV_NET_Config();
 }
 
