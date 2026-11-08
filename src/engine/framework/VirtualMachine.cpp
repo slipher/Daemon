@@ -97,8 +97,15 @@ static Cvar::Cvar<std::string> vm_box64_path(
 // Resolve box64 binary path by looking for a provided one or searching PATH if not explicitly set.
 static std::string ResolveBox64Path(std::string naclPath) {
 	std::string requestedPath = vm_box64_path.Get();
+	if (!requestedPath.empty()) {
+		if (!FS::RawPath::FileExists(requestedPath)) {
+			Sys::Error("Box64 emulation is enabled but the requested executable '%s' is missing", requestedPath);
+		}
 
-	if (requestedPath.empty()) {
+		return requestedPath;
+	}
+
+	{
 		std::string providedPath = FS::Path::Build(naclPath, "box64");
 
 		if (FS::RawPath::FileExists(providedPath)) {
@@ -118,14 +125,7 @@ static std::string ResolveBox64Path(std::string naclPath) {
 			return providedPath;
 		}
 
-		Log::Warn("Box64 emulation is enabled but the executable is not provided with the engine: %s", providedPath);
-	}
-
-	if (!FS::RawPath::FileExists(requestedPath)) {
-		Sys::Error("Box64 emulation is enabled but the requested executable is missing: %s", requestedPath);
-	}
-	else {
-		return requestedPath;
+		// Log::Warn("Box64 emulation is enabled but the executable is not provided with the engine: %s", providedPath);
 	}
 
 	const char* envPath = getenv("PATH");
@@ -333,13 +333,12 @@ static std::pair<Sys::OSHandle, IPC::Socket> InternalLoadModule(std::pair<IPC::S
 
 	pid_t pid;
 	char* emptyEnv[2] = {};
-#if defined(DAEMON_NACL_RUNTIME_LINUX) && (defined(YOKAI_ARCH_ARM64) || defined(YOKAI_ARCH_ARMHF))
-	if (OnArm64()) {
-		emptyEnv[0] = const_cast<char*>("LD_LIBRARY_PATH=lib-armhf");
-		
-		if (0 != posix_spawn_file_actions_addchdir_np(&fileActions, FS::GetLibPath().c_str())) {
-			Sys::Error("failed posix_spawn_file_actions_addchdir");
-		}
+#if defined(DAEMON_NACL_RUNTIME_LINUX) && defined(YOKAI_ARCH_ARM64)
+	// This is harmless if lib-armhf doesn't exist (for using system multi-arch install).
+	emptyEnv[0] = const_cast<char*>("LD_LIBRARY_PATH=lib-armhf");
+
+	if (0 != posix_spawn_file_actions_addchdir_np(&fileActions, FS::GetLibPath().c_str())) {
+		Sys::Error("failed posix_spawn_file_actions_addchdir");
 	}
 #endif
 	// By default, the child process gets an empty environment for sandboxing.
