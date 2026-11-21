@@ -178,8 +178,11 @@ namespace Util {
 			} else
 				Sys::Drop("IPC: Unexpected end of message");
 		}
-		template<typename T> decltype(SerializeTraits<T>::Read(std::declval<Reader&>())) Read()
+		template<typename T>
+		T Read()
 		{
+			static_assert(std::is_same_v<T, decltype(SerializeTraits<T>::Read(std::declval<Reader&>()))>,
+			              "SerializeTraits<T>::Read returns wrong type");
 			return SerializeTraits<T>::Read(*this);
 		}
 
