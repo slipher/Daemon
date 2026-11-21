@@ -89,4 +89,8 @@ so we set a custom macro in build system */
     #define CPP_STACKTRACE
 #endif
 
+#if __cpp_lib_span >= 202002L
+#   define CPP_LIB_SPAN
+#endif
+
 #endif // CPPSTANDARD_H

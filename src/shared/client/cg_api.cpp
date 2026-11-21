@@ -28,10 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ===========================================================================
 */
 
+#include "common/CPPStandard.h"
 #include <engine/client/cg_msgdef.h>
 #include <shared/VMMain.h>
 #include <shared/CommandBufferClient.h>
 #include "cg_api.h"
+
+#ifdef CPP_LIB_SPAN
+#	include <span>
+template<typename T>
+using VectorProxy = std::span<T>;
+#else
+using VectorProxy = std::vector<T>;
+#endif
 
 IPC::CommandBufferClient cmdBuffer("cgame");
 
@@ -320,7 +329,7 @@ void trap_R_AddPolyToScene( qhandle_t hShader, int numVerts, const polyVert_t *v
 		return;
 	}
 
-	std::vector<polyVert_t> myverts(verts, verts + numVerts);
+	VectorProxy<const polyVert_t> myverts(verts, verts + numVerts);
 	cmdBuffer.SendMsg<Render::AddPolyToSceneMsg>(hShader, myverts);
 }
 

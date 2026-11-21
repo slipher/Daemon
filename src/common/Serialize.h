@@ -41,11 +41,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
+#include "common/CPPStandard.h"
 #include "IPC/Common.h"
 #include "Optional.h"
 #include "String.h"
 
 #include "Type.h"
+
+#ifdef CPP_LIB_SPAN
+#   include <span>
+#endif
 
 namespace Util {
 
@@ -284,6 +289,13 @@ namespace Util {
 			stream.WriteSize(value.size());
 			stream.WriteData(value.data(), value.size() * sizeof(T));
 		}
+#ifdef CPP_LIB_SPAN
+		static void Write(Writer& stream, std::span<const T> value)
+		{
+			stream.WriteSize(value.size());
+			stream.WriteData(value.data(), value.size() * sizeof(T));
+		}
+#endif
 		static std::vector<T> Read(Reader& stream)
 		{
 			std::vector<T> value;
@@ -300,6 +312,14 @@ namespace Util {
 			for (const T& x: value)
 				stream.Write<T>(x);
 		}
+#ifdef CPP_LIB_SPAN
+		static void Write(Writer& stream, std::span<const T> value)
+		{
+			stream.WriteSize(value.size());
+			for (const T& x: value)
+				stream.Write<T>(x);
+		}
+#endif
 		static std::vector<T> Read(Reader& stream)
 		{
 			std::vector<T> value;
