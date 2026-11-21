@@ -1498,7 +1498,7 @@ template<typename Func, typename Id, typename... MsgArgs> void HandleMsg(IPC::Me
     using Message = IPC::Message<Id, MsgArgs...>;
 
     typename IPC::detail::MapTuple<typename Message::Inputs>::type inputs;
-    reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
+    reader.FillTuple(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
 
     Util::apply(std::forward<Func>(func), std::move(inputs));
 }

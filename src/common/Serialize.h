@@ -112,15 +112,14 @@ namespace Util {
 			Write<Type0>(std::forward<Arg0>(arg0));
 			WriteArgs(Util::TypeList<Types...>(), std::forward<Args>(args)...);
 		}
-		template<typename Types, typename Tuple, size_t... Seq>
-		void WriteTuple(Types, Tuple&& tuple, Util::seq<Seq...>)
+
+		template<size_t Index = 0, typename Tuple>
+		void WriteTuple(Util::TypeList<>, const Tuple&) {}
+		template<size_t Index = 0, typename Type0, typename... Types, typename Tuple>
+		void WriteTuple(Util::TypeList<Type0, Types...>, const Tuple& tuple)
 		{
-			WriteArgs(Types(), std::get<Seq>(std::forward<Tuple>(tuple))...);
-		}
-		template<typename Types, typename Tuple>
-		void WriteTuple(Types, Tuple&& tuple)
-		{
-			WriteTuple(Types(), std::forward<Tuple>(tuple), Util::gen_seq<std::tuple_size<typename std::decay<Tuple>::type>::value>());
+			Write<Type0>(std::get<Index>(tuple));
+			WriteTuple<Index + 1>(Util::TypeList<Types...>(), tuple);
 		}
 	private:
 		std::vector<char> data;
@@ -186,10 +185,10 @@ namespace Util {
 			return SerializeTraits<T>::Read(*this);
 		}
 
-		// Read a list of types into a tuple starting at the given index
-		template<size_t Index, typename Tuple>
+		// Read a list of types into a tuple
+		template<size_t Index = 0, typename Tuple>
 		void FillTuple(Util::TypeList<>, Tuple&) {}
-		template<size_t Index, typename Type0, typename... Types, typename Tuple>
+		template<size_t Index = 0, typename Type0, typename... Types, typename Tuple>
 		void FillTuple(Util::TypeList<Type0, Types...>, Tuple& tuple)
 		{
 			std::get<Index>(tuple) = Read<Type0>();

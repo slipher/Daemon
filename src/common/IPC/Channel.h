@@ -190,7 +190,7 @@ namespace IPC {
             using Message = Message<Id, MsgArgs...>;
 
             typename MapTuple<typename Message::Inputs>::type inputs;
-            reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
+            reader.FillTuple(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
             reader.CheckEndRead();
 
             bool oldSync = channel.canSendSyncMsg;
@@ -207,7 +207,7 @@ namespace IPC {
 
             typename MapTuple<typename Message::Inputs>::type inputs;
             typename Message::Outputs outputs;
-            reader.FillTuple<0>(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
+            reader.FillTuple(Util::TypeListFromTuple<typename Message::Inputs>(), inputs);
             reader.CheckEndRead();
 
             bool oldSync = channel.canSendSyncMsg;
